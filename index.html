@@ -66,11 +66,11 @@ h1 span{color:var(--gold)}
 .mic.starting{background:var(--felt2);color:var(--ink)}
 .mic.blocked{background:#5a2b2b;color:#fff}
 @keyframes rec{50%{box-shadow:0 0 0 6px rgba(224,72,72,.35)}}
-#interim{font-size:14px;color:#fff;min-height:20px;margin:6px 0 2px;font-style:italic}
+#interim{font-size:13px;color:#fff;margin:4px 0 0;font-style:italic}
 .seat.empty{opacity:.4;border-style:dashed}
 .mini-b{border:0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700;background:var(--felt2);color:var(--ink)}
 .mini-b.out{background:#6b2a2a}.mini-b.in{background:#2a6b45}
-.heard{font-size:13px;margin-top:6px;min-height:18px}
+.heard{font-size:13px;margin-top:4px;min-height:18px}
 .heard b{color:var(--gold)}
 
 /* cartas */
@@ -85,9 +85,18 @@ h1 span{color:var(--gold)}
 .picker button{border:0;border-radius:6px;background:#fff;padding:6px 0 4px;font-weight:800;font-size:13px;line-height:1.05;display:flex;flex-direction:column;align-items:center}
 .picker button:disabled{opacity:.18}
 
-.verdict{border-radius:16px;padding:12px;text-align:center;margin:10px 0;color:#fff}
+#topbar{position:sticky;top:0;z-index:50;background:var(--bg);padding:8px 10px 6px;max-width:560px;margin:0 auto;box-shadow:0 6px 12px rgba(0,0,0,.35)}
+.tbhead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tbhead b{font-size:16px;flex:0 0 auto}
+.tbhead .tag{flex:1 1 auto;text-align:center;font-size:13px;font-weight:700}
+.micS{border:0;border-radius:20px;padding:8px 14px;font-weight:800;font-size:14px;background:var(--gold);color:#111}
+.micS.on{background:var(--red);color:#fff;animation:rec 1.6s ease-in-out infinite}
+.micS.starting{background:var(--felt2);color:var(--ink)}
+.micS.blocked{background:#5a2b2b;color:#fff}
+#errbar{font-size:12px;color:#ffb3b3}
+.verdict{border-radius:14px;padding:8px 10px;text-align:center;margin:0;color:#fff}
 .verdict .pre{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.9}
-.verdict .act{font-size:30px;font-weight:900;letter-spacing:1px}
+.verdict .act{font-size:26px;font-weight:900;letter-spacing:1px;line-height:1.15}
 .verdict .sub{font-size:14px;opacity:.95}
 .verdict.mine{box-shadow:0 0 0 3px #fff;animation:pulse 1.2s ease-in-out 2}
 @keyframes pulse{50%{transform:scale(1.03)}}
@@ -118,7 +127,13 @@ details summary{font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
-<header class="wrap"><h1>♠ Assessor de <span>Poker</span></h1><span class="tag" id="handTag">Mão 1</span></header>
+<div id="topbar">
+  <div class="tbhead"><b>♠ Assessor</b><span class="tag" id="handTag">Mão 1</span><button class="micS" id="micMain">🎙️ Ligar</button></div>
+  <div id="verdict" class="verdict v-wait"><div class="act">Diga suas 2 cartas</div></div>
+  <div id="interim"></div>
+  <div class="heard" id="heard"></div>
+  <div id="errbar"></div>
+</div>
 <div class="wrap">
 
 <details class="panel" id="setup">
@@ -138,17 +153,13 @@ details summary{font-weight:700;cursor:pointer}
 
 <div class="panel">
   <h2>🎤 Narração ao vivo</h2>
-  <button class="mic" id="micMain">🎙️ Ligar microfone (fica ligado)</button>
-  <div class="note" id="micMsg">Toque uma vez para ligar. Ele fica ouvindo até você pausar.</div>
-  <div id="interim"></div>
-  <div class="heard" id="heard"></div>
+  <div class="note" id="micMsg" style="margin-top:0">Toque em <b>🎙️ Ligar</b> lá em cima uma vez. Ele fica ouvindo até você pausar.</div>
   <div class="lbl">Ou digite / use o 🎤 do teclado:</div>
   <div class="voice">
     <input id="cmd" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Toque e use o 🎤 do teclado">
     <button id="cmdOk">OK</button>
   </div>
-  <div class="heard" id="heard"></div>
-  <div class="note">Ex.: <i>“5 de copas, 6 de árvore”</i> · <i>“J1 passou, J2 desistiu, J3 aumentou meio pote”</i> · <i>“eu paguei”</i> · <i>“J4 saiu”</i> · <i>“entrou novo jogador na J4”</i> · <i>“próxima mão”</i> · <i>“desfazer”</i> · <i>“pausar microfone”</i></div>
+  <div class="note">Ex.: <i>“5 de copas, 6 de árvore”</i> · <i>“J1 passou, J2 desistiu, J3 aumentou meio pote”</i> · <i>“eu paguei”</i> · <i>“J4 saiu”</i> · <i>“entrou novo jogador na J4”</i> · <i>“J3 ganhou”</i> · <i>“J3 mostrou ás de copas e rei de paus”</i> · <i>“próxima mão”</i> · <i>“desfazer”</i> · <i>“pausar microfone”</i></div>
 </div>
 
 <div class="panel" id="actPanel">
@@ -161,7 +172,6 @@ details summary{font-weight:700;cursor:pointer}
   <div class="log" id="log"></div>
 </div>
 
-<div id="verdict" class="verdict v-wait"><div class="act">Diga ou toque suas 2 cartas</div></div>
 
 <div class="panel">
   <h2>Cartas — toque no espaço e escolha</h2>
@@ -193,6 +203,11 @@ details summary{font-weight:700;cursor:pointer}
 <div class="panel" id="outsPanel" style="display:none">
   <h2>Suas outs (cartas que melhoram sua mão)</h2>
   <div id="outsBody"></div>
+</div>
+
+<div class="panel">
+  <h2>🧠 Inteligência do assessor</h2>
+  <div id="aiBox" class="note" style="margin-top:0;font-size:13px;color:var(--ink)"></div>
 </div>
 
 <div class="panel">
@@ -274,7 +289,11 @@ const ALLH=[];
 for(let a=12;a>=0;a--)for(let b=a;b>=0;b--){if(a===b)ALLH.push({c:RANKS[a]+RANKS[b],v:chen(a,b,false),n:6});
   else{ALLH.push({c:RANKS[a]+RANKS[b]+"s",v:chen(a,b,true),n:4});ALLH.push({c:RANKS[a]+RANKS[b]+"o",v:chen(a,b,false),n:12});}}
 ALLH.sort((x,y)=>y.v-x.v);
+/* Tabela de equidade pré-flop: 27.040.000 mãos simuladas (169 mãos × 1–8 oponentes × 20.000) */
+const EQTAB={"22":[49.7,30.7,21.9,17.5,15.6,14.2,13.1,12.3],"33":[53,33.2,23.7,18.7,15.8,14.5,13.5,13.2],"44":[57.2,37,26.1,20.6,17.6,15.4,13.7,12.9],"55":[60.4,40.6,28.8,22.8,19.3,15.8,14.5,13.4],"66":[62.9,43.2,31.5,24.8,20.5,17.6,15.3,14.5],"77":[65.9,46.7,34.1,27.2,22.2,18.2,16.9,14.9],"88":[69.4,50,37.7,29.4,24.1,20.5,17.9,15.9],"99":[71.7,54,41.7,32.5,26.8,22,19.4,17.3],"AA":[85.3,73.4,63.7,55.6,49.1,44.3,38.9,34.2],"KK":[82.3,68.7,57.9,50,42.9,37.2,32.8,29.5],"QQ":[80.4,65.4,53.4,44.1,37.9,32.8,28.1,25],"AKs":[66.7,50.6,41.2,35.7,31.5,27.7,24.4,22.8],"JJ":[77.4,61.1,49.7,40.5,33.5,28.5,24.8,21.7],"AQs":[66.3,49.3,40.1,33.9,29.4,25.7,23.4,21.3],"AKo":[65.4,47.6,38.7,32,27.6,24.4,21.7,19.4],"AJs":[65.6,47.8,38.7,32.9,27.6,24.7,22.1,20.1],"KQs":[63.9,47.2,38.7,32.2,28,25.4,22.6,20.1],"TT":[74.8,57.8,45.7,36.2,30,25.6,21.8,19.3],"AQo":[64.9,47.2,37.1,30.1,26.5,22.8,19.8,17.8],"KJs":[62.9,46.2,36.7,31,26.3,23.9,21.3,19.4],"QJs":[60.4,44.6,35.7,30.5,25.7,23.6,20.6,18.8],"JTs":[57.5,42,33.8,29.1,25.1,21.4,18.8,18],"AJo":[63.6,45.4,35.5,28.5,24.4,20.5,17.8,15.7],"ATs":[64.7,46.7,37.3,31,27.1,23.3,21.2,18.9],"KQo":[61.4,44.8,34.9,29.4,25.1,22,18.7,17],"KTs":[61.4,44.7,35.6,29.8,26.1,22.7,20.7,18.1],"QTs":[59.8,43.1,33.9,29,25.4,22.2,20.4,18.5],"J9s":[55.5,39.5,32,26.1,22.4,19.7,17.6,15.9],"T9s":[53.9,38.9,31.6,25.9,22.6,20.2,17.7,16.3],"98s":[51.6,36.1,28.2,23.7,20,17.9,15.7,14.4],"A9s":[62.7,44.7,35.2,28.3,23.9,21.1,18.5,16.8],"A8s":[61.9,43.4,34.3,27.5,23.1,20.1,17.7,16.3],"A7s":[61.2,42.5,32.7,26.6,22.7,19.5,16.8,16],"A6s":[60.3,41.5,31.1,25.5,21.9,19.1,16.8,15.1],"A5s":[59.7,41.9,32,25.5,22.7,20.2,17.9,15.8],"A4s":[59,40.6,30.9,24.6,21.3,19.5,17.3,15.2],"A3s":[58.2,39.7,30.3,24.5,21.4,18.6,16.8,15.1],"A2s":[57.7,38.6,29.4,23.7,20.6,17.9,16.5,14.4],"KJo":[60.6,42.9,34.2,27.8,23.7,20.2,18.1,15.4],"QJo":[57.5,41.6,32.4,26.7,22.7,19.5,17.2,15.3],"Q9s":[57.3,40.9,32.1,26.3,22.6,19.6,18,15.7],"JTo":[55.4,39,30,25.5,20.9,18.4,16.2,14.3],"T8s":[52.4,36.2,29,23.9,20.4,18.1,15.6,14.4],"87s":[48.5,33.5,26.4,22.3,19.2,16.4,15.3,13.9],"97s":[49.3,34,27,22,19.3,16.6,14.9,13.8],"76s":[45.7,31.7,24.8,20.9,18.2,16.1,14.1,13.5],"ATo":[62.5,43.4,33.9,27.3,22.8,19.7,17.2,15],"KTo":[59.5,41.8,32.4,26.2,22.5,19.3,16.7,14.7],"K9s":[60.3,42.2,32.8,27.1,23.1,20.5,18.2,16.1],"QTo":[57.5,41.1,31.2,25.8,21.9,18.5,16,13.9],"J9o":[52.6,36.4,27.8,22.1,18.8,16,13.7,12.4],"J8s":[53.8,37.6,28.8,24.1,20.1,17.7,15.6,14.6],"T9o":[51.6,36.1,27.8,22.3,18.4,16.1,14,12.4],"86s":[46.6,32.2,25.6,20.4,17.7,15.4,13.9,13.1],"65s":[42.2,30.6,23.4,19.7,17,15,13.7,12.7],"98o":[48.2,32.8,25.3,20.3,16.7,14.1,12.6,11],"75s":[43.7,29.6,23.7,19.3,16.8,14.8,13.6,12.6],"54s":[41,29,22.1,19,16.2,14.7,13.4,12.8],"A9o":[60.9,41.4,30.7,24.8,20.2,17.5,14.8,13.1],"A8o":[60.4,40.5,30.3,23.3,19.1,16.1,13.7,12.1],"A7o":[59.4,39.3,28.4,22.3,18.6,15.4,12.9,11.3],"A6o":[57.4,37.8,27.1,21.1,17.6,14.8,12.8,10.7],"A5o":[57,38.4,28.5,21.8,18.5,15.2,13,11.4],"A4o":[56.8,37.1,27.4,21.3,17.9,15,12.9,10.9],"A3o":[55.7,36.5,25.7,20.4,16.4,14.2,12.4,10.7],"A2o":[55.2,34.7,25.9,19.9,16.4,14,12.1,10.2],"K8s":[58.6,40.4,30.2,25.3,21.3,19,16.6,15.1],"K7s":[57.3,38.9,29.6,24.5,20,18.1,16.2,14.4],"K6s":[56.7,37.7,29.2,23.9,20.5,17.5,15.1,14],"K5s":[55.7,37.9,28.4,23,19.1,17.1,15.2,13.7],"K4s":[55.1,36.2,27.2,22.7,18.8,16.7,15.1,13.2],"K3s":[53.9,35.6,27.1,22,18.8,15.8,14.8,13.1],"K2s":[52.7,35.1,26.3,21.8,18.2,16.1,14.4,13],"Q9o":[55.8,38,28.5,22.7,19.3,16,13.3,12.1],"Q8s":[56.4,38,29.5,24.2,20.3,18.1,16.1,14.9],"T8o":[49.6,33.3,25.8,20.8,16.9,14.1,12.5,11],"T7s":[50.7,34.2,27.2,22.2,19,16.9,14.9,13.7],"87o":[44.6,31,22.3,18.5,15.3,13.2,11.3,10.2],"64s":[42,28.6,22.3,18.1,16.1,14.3,12.7,11.6],"43s":[38.8,26.3,20.2,17.1,14.4,13.4,12.1,11.2],"97o":[46.2,30.9,23.1,18.4,15.3,12.3,11.3,10],"96s":[47.4,32.4,25.1,20.3,17.5,15.2,13.6,12.2],"76o":[42,28.5,21.3,17.2,14.1,12.3,10.6,9.9],"53s":[40,27.4,21,18.2,15.5,13.9,12.3,11.5],"32s":[35.8,23.1,18.3,14.9,13.1,11.9,10.6,9.6],"K9o":[57.4,39.3,29.6,23.5,19.6,16.1,14.1,12.6],"Q7s":[54.3,36.9,27.3,22.6,18.9,17.2,14.6,13.1],"Q6s":[53.7,35.6,26.5,22,18.8,16.2,14.3,12.5],"Q5s":[52.4,34.2,26.1,21.4,18,15.8,14.1,12.6],"Q4s":[51.4,33.8,25.7,20.6,17.5,15.3,14.1,12.2],"Q3s":[50.7,33.2,24.6,20.4,17.2,15.2,13.7,12.4],"Q2s":[50,32.6,24.6,19,16.5,14.6,13,12],"J8o":[51.3,33.9,25.4,20.5,16.9,14,12.2,10.7],"J7s":[52.4,35.7,27,22.4,18.8,16.6,14.6,13.1],"86o":[43,28.6,20.9,17,13.6,11.8,10.2,9.2],"85s":[45.2,30.1,23.2,19,16.2,14.2,12.7,11.5],"65o":[39.7,27.2,20.4,15.5,13.6,11.9,10.3,8.9],"42s":[37,24.3,18.9,15.9,13.2,11.9,11.5,10.5],"75o":[40.5,26.1,19.6,15.6,12.6,11.1,9.7,8.6],"74s":[41.9,27.3,21.6,17.7,15.4,14,12,11],"54o":[37.8,26.3,18.5,15,12.9,11.1,9.6,8.8],"K8o":[56.4,36.9,26.8,20.6,17.1,14.8,12.5,10.7],"K7o":[54.7,35.2,26.2,20.9,16.4,14.1,11.7,10.1],"K6o":[53.3,34.2,25.8,19.8,15.8,13.6,11.5,9.6],"K5o":[53.3,34.1,24.9,18.8,15.2,13,10.6,9.6],"K4o":[52.3,33.1,23.6,18.4,15.2,12.1,10.9,9.1],"K3o":[51.4,32.5,22.7,18.1,14.2,12.1,10.2,9.1],"K2o":[50.3,31.2,21.8,17.1,13.7,12.2,10,8.9],"Q8o":[53.9,35.5,26.3,20.6,16.7,14.4,12.2,10.5],"J6s":[50.8,33.8,25.9,20.6,17.2,14.9,12.9,12],"J5s":[50.3,32.3,24.3,19.8,17,14.8,12.9,11.8],"J4s":[49.3,32.4,24.5,19.4,16.8,14.5,12.7,11.6],"J3s":[48,30.7,23.3,19.3,15.6,13.9,12.6,11.3],"J2s":[46.8,30.4,22.3,18.4,15.7,13.4,11.9,11.4],"T7o":[47.4,31.6,23.1,18.3,15.2,12.5,11.2,9.6],"T6s":[48.9,33,24.9,20.3,17.4,15.2,13.7,12.5],"64o":[38.9,25.1,18.3,14.7,12.3,10.4,9.4,8],"63s":[39.6,26.3,20.6,17.3,14.5,13,11.8,10.1],"43o":[35,22.1,16.4,13.7,10.8,9.1,8.3,7.6],"96o":[44.4,28.9,21.1,16.9,13.6,11.5,9.7,8.7],"95s":[45.5,30.3,22.6,18.5,15.7,13.8,12.9,11.2],"53o":[36.5,23.7,16.9,13.5,10.8,10.2,8.8,8.3],"52s":[37.9,25.7,19.7,16,14.2,13,11.3,10.1],"32o":[32.5,20,13.9,11.2,9,7.9,6.8,6.1],"Q7o":[51.6,33.2,23.5,18.6,15.3,12.1,10.5,9.1],"Q6o":[50.9,32.9,23.4,18.1,14.8,12,10.4,8.6],"Q5o":[50.1,31.6,22.6,17,13.9,11.5,9.9,8.1],"Q4o":[49.8,30.6,21.4,17.1,13.6,11.4,9.8,8.3],"Q3o":[48.4,29.9,20.4,15.7,12.9,10.8,9,7.9],"Q2o":[47.3,29.1,20,15.4,12.2,10.5,8.7,7.7],"J7o":[49.9,31.7,22.9,18.7,14.5,12.4,10.4,9.2],"T5s":[46.9,30.5,23.3,19.2,16.2,13.9,12.5,11.3],"T4s":[46.2,29.8,22.6,18.2,15.4,13.5,12.4,11.1],"T3s":[45.8,29.8,22.3,17.6,14.9,13.7,11.8,10.5],"T2s":[44.8,28.9,21.3,17.4,14.9,12.8,11.3,10.8],"85o":[41.2,26.8,19.8,15.2,12.2,10.8,9.3,8.3],"84s":[42.4,27.9,20.9,17.6,15.2,13.3,11.7,10.3],"42o":[34,21,14.7,11.8,9.8,8.6,7.3,6.8],"94s":[43.6,28.5,21.4,17.1,14.4,12.6,11.5,10.3],"93s":[43.4,27.5,21.1,16.6,14.3,12.2,11,10.3],"92s":[42.7,27.3,20,16.4,13.6,12.2,10.8,9.5],"74o":[38.5,24,17.7,13.8,11.5,10,8.4,7.1],"73s":[40.5,27,20.1,16.2,13.6,12.4,11.2,9.9],"J6o":[47.3,29.3,21.1,16.5,13.5,10.9,9.5,8.1],"J5o":[47.2,29.6,20.5,16.1,12.6,10.8,8.8,7.9],"J4o":[46.4,28.4,20.4,15,12.2,10.4,8.8,7.6],"J3o":[45.2,27.2,19.2,14.6,12,10.1,8.2,7.1],"J2o":[44.9,26.5,18.3,14.1,11.4,9.8,8.1,7.1],"T6o":[46.7,28.9,21,16.4,13.4,11.3,9.3,8.2],"83s":[41.2,26.2,19.5,16.2,13.4,12.2,10.8,9.5],"82s":[40.4,26.4,19.6,15.8,13.2,11.6,10.4,9.4],"63o":[36.2,23.4,16.6,12.8,10.1,8.7,7.8,7.2],"62s":[38,24.6,18.7,15.2,13.4,11.7,10.6,9.9],"95o":[42.4,26.4,19.2,14.7,12,10,8.6,7.6],"72s":[38.4,24.3,18.4,15,13.1,11.1,10.4,9.4],"52o":[33.7,21.5,14.9,11.3,10.2,8.8,7.7,7],"T5o":[44.5,26.8,19.2,14.6,12,9.9,8.3,7.4],"T4o":[44,27,18.8,13.9,11.5,9.7,8.2,6.9],"T3o":[41.5,25.2,18.1,13.8,10.7,9.4,7.8,6.6],"T2o":[42,24.8,16.9,13.1,10.5,9.1,7.5,6.7],"84o":[39.3,24.7,17.4,13.1,10.8,8.9,8.2,6.9],"94o":[40.8,24.5,17.2,13.8,10.5,8.4,7.3,6.1],"93o":[39.3,24.1,16.8,13.2,10.3,8.2,7,6.1],"92o":[39.3,22.8,15.9,12.3,9.7,8,6.7,6.1],"73o":[36.3,22.2,15.9,12,10,8.2,7.4,6.4],"83o":[37.9,22.7,15.3,12,9.4,7.7,7.1,5.7],"82o":[36.6,21.7,14.9,11.6,9.2,7.6,6.3,5.7],"62o":[33.7,21,14.4,11.5,9.5,7.7,6.8,6.2],"72o":[34.6,20.4,14.3,10.6,8.5,7.4,6.1,5.5]};
+ALLH.sort((x,y)=>EQTAB[y.c][2]-EQTAB[x.c][2]);
 const TOP={};{let cum=0;for(const h of ALLH){TOP[h.c]=(cum+h.n/2)/1326;cum+=h.n;}}
+const PCT={};function pctFor(n){n=Math.max(1,Math.min(8,n));if(PCT[n])return PCT[n];const arr=ALLH.slice().sort((x,y)=>EQTAB[y.c][n-1]-EQTAB[x.c][n-1]);const m={};let cum=0;for(const h of arr){m[h.c]=(cum+h.n/2)/1326;cum+=h.n;}return PCT[n]=m;}
 function parseRange(str){const set=new Set();
   for(let tok of str.split(",").map(x=>x.trim()).filter(Boolean)){const plus=tok.endsWith("+");if(plus)tok=tok.slice(0,-1);
     const a=RANKS.indexOf(tok[0]),b=RANKS.indexOf(tok[1]),sfx=tok[2]||"";
@@ -309,9 +328,9 @@ const rangeKey=p=>({"UTG+1":"UTG","UTG+2":"UTG",HJ:"MP"}[p]||p);
 const STYLE={loose:{lbl:"Soltos",frac:0.95},normal:{lbl:"Normais",frac:0.45},tight:{lbl:"Apertados",frac:0.22}};
 const S={players:6,occ:[true,true,true,true,true,true],buttonSeat:0,style:"normal",stats:{},handNo:1,
   cards:[null,null,null,null,null,null,null],slot:0,h:null,undo:[]};
-try{const sv=JSON.parse(localStorage.getItem("pokerAssessor.v3")||"null");if(sv){Object.assign(S,{players:sv.players,occ:sv.occ,buttonSeat:sv.buttonSeat,style:sv.style,stats:sv.stats||{},handNo:sv.handNo||1});}}catch(e){}
+try{const sv=JSON.parse(localStorage.getItem("pokerAssessor.v3")||"null");if(sv){Object.assign(S,{players:sv.players,occ:sv.occ,buttonSeat:sv.buttonSeat,style:sv.style,stats:sv.stats||{},handNo:sv.handNo||1,totalHands:sv.totalHands||0,totalActs:sv.totalActs||0});}}catch(e){}
 if(!Array.isArray(S.occ)||S.occ.length!==S.players)S.occ=Array(S.players).fill(true);S.occ[0]=true;
-function save(){try{localStorage.setItem("pokerAssessor.v3",JSON.stringify({players:S.players,occ:S.occ,buttonSeat:S.buttonSeat,style:S.style,stats:S.stats,handNo:S.handNo}));}catch(e){}}
+function save(){try{localStorage.setItem("pokerAssessor.v3",JSON.stringify({players:S.players,occ:S.occ,buttonSeat:S.buttonSeat,style:S.style,stats:S.stats,handNo:S.handNo,totalHands:S.totalHands||0,totalActs:S.totalActs||0}));}catch(e){}}
 const seatName=i=>i===0?"Você":"J"+i;
 const occList=()=>[...Array(S.players).keys()].filter(i=>S.occ[i]);
 function fixButton(){if(!S.occ[S.buttonSeat])S.buttonSeat=nextOcc(S.buttonSeat);}
@@ -320,7 +339,7 @@ function posOf(seat){const L0=occList(),n=L0.length;if(!S.occ[seat]||n<2)return 
   const bi=L0.indexOf(S.buttonSeat),i=L0.indexOf(seat);return L[((i-bi+b)%n+n)%n];}
 function seatOfPos(p){const L0=occList(),n=L0.length,L=POSLIST[n],b=L.indexOf("BTN"),k=L.indexOf(p),bi=L0.indexOf(S.buttonSeat);return L0[((bi+k-b)%n+n)%n];}
 function setMyPos(p){const L0=occList(),n=L0.length,L=POSLIST[n],b=L.indexOf("BTN"),k=L.indexOf(p),mi=L0.indexOf(0);S.buttonSeat=L0[((mi-k+b)%n+n)%n];}
-const emptyStat=()=>({h:0,vpip:0,pfr:0,flop:0,agg:0,calls:0});
+const emptyStat=()=>({h:0,vpip:0,pfr:0,flop:0,agg:0,calls:0,won:0,sd:0,bluffs:0,aggSd:0,showns:[]});
 
 function newHand(){
   const N=S.players;fixButton();
@@ -362,7 +381,7 @@ function doAction(type,size,seat){
   const s=h.cur,f=h.flags[s];h.acted=true;
   if(h.street===0){
     if(type==="call"||type==="raise"||type==="allin"){if(!(type==="call"&&h.raises===0&&posOf(s)==="BB"))f.vpip=true;}
-    if(type==="raise"||type==="allin"){f.pfr=true;h.raises++;}
+    if(type==="raise"||type==="allin"){f.pfr=true;h.raises++;h.aggSeat=s;}
     if(type==="call"&&h.raises===0&&posOf(s)!=="BB")h.limps++;
   }else{
     if(type==="raise"||type==="allin"){f.agg++;h.aggSeat=s;}
@@ -393,35 +412,66 @@ function enterSeat(seat){
   S.h.last[seat]="novo · próx. mão";S.h.lastCls[seat]="check";S.h.log.push(`🆕 Novo jogador em ${seatName(seat)} (contagem zerada)`);
   save();return "";
 }
-function commitStats(){
-  const h=S.h;if(!h||!h.acted)return;
-  for(let i=1;i<S.players;i++){if(!h.dealt[i]||!S.occ[i])continue;const t=S.stats[i]||(S.stats[i]=emptyStat());const f=h.flags[i];
-    t.h++;if(f.vpip)t.vpip++;if(f.pfr)t.pfr++;if(f.flop)t.flop++;t.agg+=f.agg;t.calls+=f.calls;}
-}
-function nextHand(){
-  commitStats();S.handNo++;
-  S.buttonSeat=nextOcc(S.buttonSeat);
-  S.cards=[null,null,null,null,null,null,null];S.slot=0;newHand();save();renderAll();window.scrollTo({top:0,behavior:"smooth"});
-}
 function syncStreet(){
   const nb=nBoard();const ns=nb>=5?3:nb===4?2:nb>=3?1:0;
   if(ns>S.h.street&&!S.h.over){S.undo.push(JSON.stringify(S.h));for(let s=S.h.street+1;s<=ns;s++)startStreet(s);}
 }
 
-/* ================= Perfis ================= */
-function smooth(seat){const t=S.stats[seat]||{h:0,vpip:0,pfr:0,flop:0,agg:0,calls:0};const d=STYLE[S.style].frac,K=6;
+function commitStats(){
+  const h=S.h;if(!h||!h.acted)return;
+  const board=S.cards.slice(2).filter(c=>c!==null);
+  for(let i=1;i<S.players;i++){if(!h.dealt[i]||!S.occ[i])continue;const t=S.stats[i]||(S.stats[i]=emptyStat());fillStat(t);const f=h.flags[i];
+    t.h++;if(f.vpip)t.vpip++;if(f.pfr)t.pfr++;if(f.flop)t.flop++;t.agg+=f.agg;t.calls+=f.calls;
+    if(h.winner===i)t.won++;
+    const sh=h.shown&&h.shown[i];
+    if(sh&&sh.length===2){t.sd++;const c=code(sh[0],sh[1]);let ct=null;if(board.length===5)ct=cat(evaluate(sh.concat(board)));
+      t.showns.push({c,top:TOP[c],pre:f.pfr?"r":f.vpip?"c":"b",agg:f.agg>0,ct});if(t.showns.length>12)t.showns.shift();
+      if(f.agg>0&&ct!==null){t.aggSd++;if(ct===0)t.bluffs++;}}
+  }
+  S.totalHands=(S.totalHands||0)+1;S.totalActs=(S.totalActs||0)+h.log.length;
+}
+function fillStat(t){for(const k of ["won","sd","bluffs","aggSd"])if(t[k]==null)t[k]=0;if(!t.showns)t.showns=[];return t;}
+function nextHand(quiet){
+  commitStats();S.handNo++;
+  S.buttonSeat=nextOcc(S.buttonSeat);
+  S.cards=[null,null,null,null,null,null,null];S.slot=0;newHand();save();renderAll();
+  toast(`Mão ${S.handNo} começou — você está no ${posOf(0)}`);
+  if(!quiet)window.scrollTo({top:0,behavior:"smooth"});
+}
+function declareWin(seat){
+  const h=S.h;if(seat==null||seat<0||seat>=S.players||!S.occ[seat])return "vencedor inválido";
+  S.undo.push(JSON.stringify(h));h.winner=seat;h.over=true;h.cur=-1;h.wait=false;h.acted=true;
+  h.last[seat]=seat===0?"🏆 ganhei":"🏆 ganhou";h.lastCls[seat]="raise";h.log.push(`🏆 ${seatName(seat)} ganhou a mão`);return "";
+}
+function showCard(seat,c){
+  const h=S.h;if(!h.shown)h.shown={};const a=h.shown[seat]||(h.shown[seat]=[]);
+  if(seat===0)return "";if(S.cards.includes(c)||Object.values(h.shown).some(x=>x.includes(c)))return `${cardTxt(c)} já usada`;
+  if(a.length>=2)a.length=0;a.push(c);if(a.length===2){h.log.push(`👀 ${seatName(seat)} mostrou ${cardTxt(a[0])} ${cardTxt(a[1])} (${code(a[0],a[1])})`);h.last[seat]=`mostrou ${code(a[0],a[1])}`;}
+  h.acted=true;return "";
+}
+
+/* ================= Perfis (modelo que aprende) ================= */
+function smooth(seat){const t=fillStat(S.stats[seat]||emptyStat());const d=STYLE[S.style].frac,K=6;
   return {n:t.h,vpip:(t.vpip+d*K)/(t.h+K),pfr:(t.pfr+d*0.4*K)/(t.h+K),af:(t.agg+1)/(t.calls+1),raw:t};}
 function profile(seat){const p=smooth(seat),t=p.raw;
   if(t.h<5)return {e:"❔",n:"Coletando dados",tip:`Precisa de mais mãos (${t.h}/5).`};
-  const v=t.vpip/t.h,r=t.pfr/t.h,af=(t.agg+0.5)/(t.calls+0.5);
-  if(v>=0.45&&(af>=1.5||r>=0.25))return {e:"🔥",n:"Maníaco",tip:"Aposta e aumenta demais: pague com mãos médias e deixe ele blefar."};
-  if(v>=0.40)return {e:"🐟",n:"Paga tudo",tip:"Entra e paga muito: NÃO blefe; aposte forte quando tiver mão."};
-  if(v<0.22&&r>=0.12)return {e:"🦈",n:"Apertado-agressivo",tip:"Joga poucas mãos e bem: respeite os aumentos dele."};
-  if(v<0.22)return {e:"🪨",n:"Pedra",tip:"Quase não joga; quando aposta tem mão. Roube os blinds dele."};
-  if(r/Math.max(v,0.01)>=0.55)return {e:"⚡",n:"Solto-agressivo",tip:"Joga muitas mãos aumentando: re-aumente mais leve contra ele."};
-  return {e:"😐",n:"Solto-passivo",tip:"Entra muito só pagando: aumente para isolar e aposte valor."};
+  const v=t.vpip/t.h,r=t.pfr/t.h,af=(t.agg+0.5)/(t.calls+0.5);let o;
+  if(v>=0.45&&(af>=1.5||r>=0.25))o={e:"🔥",n:"Maníaco",tip:"Aposta e aumenta demais: pague com mãos médias e deixe ele blefar."};
+  else if(v>=0.40)o={e:"🐟",n:"Paga tudo",tip:"Entra e paga muito: NÃO blefe; aposte forte quando tiver mão."};
+  else if(v<0.22&&r>=0.12)o={e:"🦈",n:"Apertado-agressivo",tip:"Joga poucas mãos e bem: respeite os aumentos dele."};
+  else if(v<0.22)o={e:"🪨",n:"Pedra",tip:"Quase não joga; quando aposta tem mão. Roube os blinds dele."};
+  else if(r/Math.max(v,0.01)>=0.55)o={e:"⚡",n:"Solto-agressivo",tip:"Joga muitas mãos aumentando: re-aumente mais leve contra ele."};
+  else o={e:"😐",n:"Solto-passivo",tip:"Entra muito só pagando: aumente para isolar e aposte valor."};
+  if(t.aggSd>=2){const br=t.bluffs/t.aggSd;if(br>=0.3)o.tip+=` Já foi pego blefando ${t.bluffs}× em ${t.aggSd} apostas mostradas: pague mais as apostas dele.`;else if(br===0&&t.aggSd>=3)o.tip+=" Nunca foi pego blefando: quando ele aposta, acredite.";}
+  if(t.showns.length)o.tip+=` Já mostrou: ${t.showns.slice(-4).map(x=>x.c).join(", ")}.`;
+  return o;
 }
-function oppFrac(seat){const p=smooth(seat);let f=S.h.flags[seat].pfr?p.pfr:p.vpip;if(S.h.raises>=2&&S.h.flags[seat].pfr)f*=0.5;return Math.max(0.04,Math.min(1,f));}
+function oppFrac(seat){
+  const p=smooth(seat),t=p.raw,raised=S.h.flags[seat].pfr;let f=raised?p.pfr:p.vpip;
+  // aprende com as mãos mostradas: se as cartas mostradas nesse tipo de jogada têm média μ, o range ≈ 2μ
+  const sh=t.showns.filter(x=>raised?x.pre==="r":x.pre!=="b");
+  if(sh.length){const mu=sh.reduce((a,x)=>a+x.top,0)/sh.length;const est=Math.min(1,2*mu);f=(f*4+est*sh.length)/(4+sh.length);}
+  if(S.h.raises>=2&&raised)f*=0.5;return Math.max(0.04,Math.min(1,f));}
 
 /* ================= Simulação ================= */
 function nBoard(){let n=0;for(let i=2;i<7;i++)if(S.cards[i]!==null)n++;return n;}
@@ -456,8 +506,8 @@ function preflopCtx(){const h=S.h;let pre=h.raises===0?(h.limps>0?"limp":"none")
   if(h.flags[0].pfr&&h.raises>=2)pre="3bet";return pre;}
 function preflopAdvice(){
   const h=code(S.cards[0],S.cards[1]);const pos=posOf(0),rkey=rangeKey(pos),pre=preflopCtx();
-  const top=TOP[h];const why=[];let act,size="";
-  why.push(`Sua mão <b>${h}</b> está entre as <b>top ${(top*100).toFixed(top<0.1?1:0)}%</b> das mãos iniciais. Posição: <b>${pos}</b>.`);
+  const nO=Math.max(1,Math.min(8,activeSeats().length-1));const top=pctFor(nO)[h];const why=[];let act,size="";
+  why.push(`Sua mão <b>${h}</b> está entre as <b>top ${(top*100).toFixed(top<0.1?1:0)}%</b> contra ${nO} oponente${nO>1?"s":""}. Posição: <b>${pos}</b>.`);
   const ctxTxt={none:"ninguém entrou no pote",limp:`${S.h.limps} jogador(es) só pagaram (limp)`,raise:"alguém aumentou","3bet":"houve aumento e re-aumento"}[pre];
   why.push(`Até agora: ${ctxTxt}.`);
   const inRFI=pos!=="BB"&&(RFI[rkey]||RFI.UTG).has(h);
@@ -522,7 +572,9 @@ const RW={as:12,az:12,ace:12,a:12,rei:11,reis:11,k:11,ka:11,ca:11,kei:11,dama:10
   dez:8,"10":8,t:8,nove:7,"9":7,oito:6,"8":6,sete:5,"7":5,seis:4,meia:4,"6":4,cinco:3,"5":3,quatro:2,"4":2,tres:1,"3":1,dois:0,duas:0,"2":0};
 const SW={copas:1,copa:1,coracao:1,coracoes:1,coracaozinho:1,espada:0,espadas:0,espadinha:0,ouro:2,ouros:2,ourinho:2,losango:2,diamante:2,diamantes:2,
   paus:3,pau:3,arvore:3,arvores:3,arvorezinha:3,trevo:3,trevinho:3,zap:3};
-const SEATW=["j","jota","jogador","jogadora","g","ge","gi","je","ja","cadeira","posicao","lugar","assento"];
+const SEATW=["j","jota","jogador","jogadora","g","ge","gi","je","ja","jay","jei","jey","gei","cadeira","posicao","lugar","assento"];
+const WINW=["ganhou","ganhei","venceu","venci","levou","levei","ganhador","vencedor","ganha"];const WINME=["ganhei","venci","levei"];
+const SHOWW=["mostrou","mostrei","tinha","abriu","virou","mostra"];
 const NUMW={um:1,uma:1,"1":1,dois:2,duas:2,"2":2,tres:3,"3":3,quatro:4,"4":4,cinco:5,"5":5,seis:6,"6":6,sete:7,"7":7,oito:8,"8":8};
 const AW={fold:["desistiu","desisti","desisto","desistir","desiste","fold","foldou","correu","corri","largou","fugiu"],
   check:["passou","passei","passo","passar","passa","check","checou","mesa","bateu"],
@@ -539,20 +591,30 @@ function seatAt(t,i){ // retorna [seat, tokens usados] ou null
   if(nx in NUMW){const j=i+2;if(j<t.length&&(t[j] in SW||["de","do","da"].includes(t[j])))return null;return [NUMW[nx],2];}
   return null;
 }
+let carrySeat=null,carryAt=0;
 function parseCmd(text){
-  const t=norm(text).split(/\s+/).filter(Boolean);const ev=[];let pend=null;
+  const t=norm(text).split(/\s+/).filter(Boolean);const ev=[];
+  let pend=(carrySeat!=null&&Date.now()-carryAt<5000)?carrySeat:null;carrySeat=null;
+  let showFor=null,showN=0;
   const findSeatAhead=(i)=>{for(let j=i+1;j<Math.min(t.length,i+7);j++){const r=seatAt(t,j);if(r)return [r[0],j+r[1]-1];}return null;};
   for(let i=0;i<t.length;i++){const w=t[i];
     const sr=seatAt(t,i);
     if(sr){pend=sr[0];i+=sr[1]-1;continue;}
+    let card=null;
     const sh=w.match(/^(10|[2-9tjqka])([ceop])$/);
-    if(sh){ev.push({k:"card",c:RANKS.indexOf(sh[1]==="10"?"T":sh[1].toUpperCase())*4+{e:0,c:1,o:2,p:3}[sh[2]]});continue;}
-    if(w in RW){let j=i+1;while(j<t.length&&["de","do","da","dos","das","of","em"].includes(t[j]))j++;
-      if(j<t.length&&t[j] in SW){ev.push({k:"card",c:RW[w]*4+SW[t[j]]});i=j;continue;}}
+    if(sh)card=RANKS.indexOf(sh[1]==="10"?"T":sh[1].toUpperCase())*4+{e:0,c:1,o:2,p:3}[sh[2]];
+    else if(w in RW){let j=i+1;while(j<t.length&&["de","do","da","dos","das","of","em"].includes(t[j]))j++;
+      if(j<t.length&&t[j] in SW){card=RW[w]*4+SW[t[j]];i=j;}}
+    if(card!==null){if(showFor!=null){ev.push({k:"show",s:showFor,c:card});if(++showN>=2)showFor=null;}else ev.push({k:"card",c:card});continue;}
     if(w==="eu"){pend=0;continue;}
     if(w==="proxima"||(w==="nova"&&t[i+1]==="mao")){ev.push({k:"next"});i++;pend=null;continue;}
     if(["desfazer","desfaz","errei","cancela","cancelar"].includes(w)){ev.push({k:"undo"});continue;}
     if(["pausar","pausa","desligar"].includes(w)&&(t[i+1]==="microfone"||t[i+1]==="mic"||w!=="pausa")){ev.push({k:"pause"});continue;}
+    if(WINW.includes(w)){let s=pend;if(s==null&&WINME.includes(w))s=0;if(s==null){const a=findSeatAhead(i);if(a){s=a[0];i=a[1];}}
+      if(s==null){const act=activeSeats();if(act.length===1)s=act[0];}
+      if(s!=null)ev.push({k:"win",s});pend=null;continue;}
+    if(SHOWW.includes(w)){let s=pend;if(s==null&&w==="mostrei")s=0;if(s==null){const a=findSeatAhead(i);if(a){s=a[0];i=a[1];}}
+      if(s!=null){showFor=s;showN=0;}pend=null;continue;}
     if(LEAVEW.includes(w)||(w==="foi"&&t[i+1]==="embora")){let s=pend;if(s==null){const a=findSeatAhead(i);if(a){s=a[0];i=a[1];}}
       if(s!=null)ev.push({k:"leave",s});pend=null;continue;}
     if(ENTERW.includes(w)&&!(w==="nova"&&t[i+1]==="mao")){let s=null;const a=findSeatAhead(i);if(a){s=a[0];i=a[1];}else if(pend!=null)s=pend;
@@ -564,56 +626,75 @@ function parseCmd(text){
       const seat=pend!=null?pend:(FP.includes(w)?0:null);
       ev.push({k:"act",a,size,seat});pend=null;}
   }
+  if(pend!=null){carrySeat=pend;carryAt=Date.now();}
   return ev;
 }
 function runCmd(text){
   if(!text||!text.trim())return;const ev=parseCmd(text);const out=[];
-  if(!ev.length){$("heard").innerHTML=`<span style="opacity:.6">Ouvi: “${text}” (sem comando)</span>`;return;}
+  if(!ev.length){if(carrySeat==null)$("heard").innerHTML=`<span style="opacity:.6">Ouvi: “${text}” (sem comando)</span>`;return;}
   for(const e of ev){
-    if(e.k==="card"){if(S.cards.includes(e.c)){out.push(`${cardTxt(e.c)} já usada`);continue;}
+    if(e.k==="card"){
+      if(S.h.over&&heroOk()){nextHand(true);out.push("<b>nova mão</b>");}
+      if(S.cards.includes(e.c)){out.push(`${cardTxt(e.c)} já usada`);continue;}
       const i=S.cards.findIndex(x=>x===null);if(i<0){out.push("mesa cheia");continue;}S.cards[i]=e.c;syncStreet();out.push(`<b>${cardTxt(e.c)}</b>`);}
     else if(e.k==="act"){const r=doAction(e.a,e.size,e.seat);const who=S.h.log.length?S.h.log[S.h.log.length-1]:"";out.push(r?`⚠️ ${r}`:`<b>${who}</b>`);}
+    else if(e.k==="win"){const r=declareWin(e.s);out.push(r?`⚠️ ${r}`:`<b>🏆 ${seatName(e.s)} ganhou</b>`);}
+    else if(e.k==="show"){const r=showCard(e.s,e.c);out.push(r?`⚠️ ${r}`:`${seatName(e.s)} mostrou <b>${cardTxt(e.c)}</b>`);}
     else if(e.k==="leave"){const r=leaveSeat(e.s);out.push(r?`⚠️ ${r}`:`<b>${seatName(e.s)} saiu</b>`);}
     else if(e.k==="enter"){const r=enterSeat(e.s);out.push(r?`⚠️ ${r}`:`<b>novo jogador em ${seatName(e.s)}</b>`);}
     else if(e.k==="undo"){undoAct();out.push("<b>desfeito</b>");}
-    else if(e.k==="next"){nextHand();out.push("<b>próxima mão</b>");}
+    else if(e.k==="next"){nextHand(true);out.push("<b>próxima mão</b>");}
     else if(e.k==="pause"){micStop();out.push("<b>microfone pausado</b>");}
   }
   S.slot=Math.max(0,S.cards.findIndex(x=>x===null));
-  $("heard").innerHTML="Entendi: "+out.join(" · ");renderAll();
+  $("heard").innerHTML="✔ "+out.join(" · ");renderAll();
 }
 const cardTxt=c=>RNAME[rk(c)]+SUITS[st(c)];
 
 /* ================= Microfone contínuo ================= */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-let micWanted=false,rec=null,dict=null,engine=null,lastInterim="",wake=null,restarts=0;
-function micUI(state,msg){const b=$("micMain");b.className="mic "+state;
-  b.innerHTML=state==="on"?"🔴 Microfone LIGADO — toque para pausar":state==="starting"?"⏳ Ligando microfone…":state==="blocked"?"🚫 Microfone bloqueado":"🎙️ Ligar microfone (fica ligado)";
+let micWanted=false,rec=null,dict=null,engine=null,wake=null,running=false,everStarted=false,lastAttempt=0,lastResult=0;
+let segWords=[],doneWords=0,silTimer=null;
+function micUI(state,msg){const b=$("micMain");b.className="micS "+state;
+  b.textContent=state==="on"?"🔴 Ouvindo":state==="starting"?"⏳…":state==="blocked"?"🚫 Mic":"🎙️ Ligar";
   if(msg!==undefined)$("micMsg").innerHTML=msg;}
 async function keepAwake(on){try{if(on&&navigator.wakeLock&&!wake){wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>{wake=null;});}if(!on&&wake){await wake.release();wake=null;}}catch(e){}}
-function blocked(){micWanted=false;micUI("blocked",`O navegador não liberou o microfone nesta página. No iPhone isso acontece quando ela é aberta dentro do Claude: use o <b>🎤 do teclado</b> na caixa abaixo, ou abra a versão em site próprio (arquivo enviado na conversa).`);keepAwake(false);}
+function blocked(){if(dict&&engine!=="dict"&&micWanted){engine="dict";dict.start().then(()=>micUI("on")).catch(()=>{engine="x";blocked();});return;}micWanted=false;micUI("blocked",`O navegador não liberou o microfone. No iPhone: Ajustes › Apps › Safari › Microfone → Permitir, e confira se Siri e Ditado estão ativados. Enquanto isso, use o 🎤 do teclado na caixa abaixo.`);keepAwake(false);}
 function micStart(){
-  micWanted=true;restarts=0;micUI("starting","");keepAwake(true);
-  if(dict){engine="dict";dict.start().then(()=>micUI("on","Pode narrar: “J1 passou, J2 desistiu…”")).catch(e=>{if(SR)startSR();else blocked();});return;}
+  micWanted=true;micUI("starting","");keepAwake(true);
   if(SR){startSR();return;}
+  if(dict){engine="dict";dict.start().then(()=>micUI("on")).catch(()=>blocked());return;}
   blocked();
 }
-function micStop(){micWanted=false;try{rec&&rec.abort();}catch(e){}try{dict&&engine==="dict"&&dict.stop();}catch(e){}micUI("off","Microfone pausado.");$("interim").textContent="";keepAwake(false);}
+function micStop(){micWanted=false;flushDelta();if(rec){rec.onend=null;try{rec.abort();}catch(e){}}running=false;try{dict&&engine==="dict"&&dict.stop();}catch(e){}
+  micUI("off","Microfone pausado. Toque em 🎙️ Ligar para voltar.");$("interim").textContent="";keepAwake(false);}
+function flushDelta(){clearTimeout(silTimer);if(segWords.length>doneWords){const t=segWords.slice(doneWords).join(" ");doneWords=segWords.length;$("interim").textContent="";runCmd(t);}}
 function startSR(){
-  engine="sr";
-  try{rec=new SR();}catch(e){blocked();return;}
-  rec.lang="pt-BR";rec.continuous=!IOS;rec.interimResults=true;rec.maxAlternatives=1;
-  rec.onstart=()=>{micUI("on","Pode narrar: “J1 passou, J2 desistiu…”");};
-  rec.onresult=e=>{let interim="";
-    for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){lastInterim="";runCmd(r[0].transcript);}else interim+=r[0].transcript;}
-    lastInterim=interim;$("interim").textContent=interim?"🗣️ "+interim:"";};
-  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture"){blocked();}};
-  rec.onend=()=>{if(lastInterim){const t=lastInterim;lastInterim="";runCmd(t);}$("interim").textContent="";
-    if(micWanted){restarts++;setTimeout(()=>{if(!micWanted)return;try{rec.start();}catch(e){try{startSR();}catch(_){}}},IOS?150:300);}};
-  try{rec.start();}catch(e){blocked();}
+  engine="sr";lastAttempt=Date.now();
+  if(rec){rec.onend=null;rec.onresult=null;rec.onerror=null;try{rec.abort();}catch(e){}}
+  segWords=[];doneWords=0;running=false;
+  let r;try{r=new SR();}catch(e){blocked();return;}
+  rec=r;r.lang="pt-BR";r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
+  r.onstart=()=>{if(rec!==r)return;running=true;everStarted=true;lastResult=Date.now();micUI("on","Ouvindo. Narre: “J1 desistiu, J2 pagou…”. Toque em 🔴 para pausar.");};
+  r.onresult=e=>{if(rec!==r)return;lastResult=Date.now();let full="";
+    for(let i=0;i<e.results.length;i++)full+=" "+e.results[i][0].transcript;
+    segWords=full.trim().split(/\s+/).filter(Boolean);
+    if(doneWords>segWords.length)doneWords=segWords.length;
+    const pending=segWords.slice(doneWords).join(" ");$("interim").textContent=pending?"🗣️ "+pending:"";
+    let allFinal=e.results.length>0;for(let i=0;i<e.results.length;i++)if(!e.results[i].isFinal)allFinal=false;
+    clearTimeout(silTimer);silTimer=setTimeout(flushDelta,allFinal?250:1100);};
+  r.onerror=e=>{if(rec!==r)return;if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture"){
+      if(!everStarted)blocked();else{micWanted=false;running=false;micUI("off","O iPhone pausou o microfone (tela bloqueada, ligação ou Siri). Toque em 🎙️ Ligar para voltar.");}}};
+  r.onend=()=>{if(rec!==r)return;running=false;flushDelta();if(micWanted)setTimeout(()=>{if(micWanted&&rec===r)startSR();},250);};
+  try{r.start();}catch(e){setTimeout(()=>{if(micWanted)startSR();},800);}
 }
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&micWanted){keepAwake(true);if(engine==="sr"){try{rec.start();}catch(e){}}}});
+// vigia: religa se o reconhecimento morrer sem avisar (comum no iPhone)
+setInterval(()=>{if(!micWanted||engine!=="sr")return;const now=Date.now();
+  if(!running&&now-lastAttempt>3500)startSR();
+  else if(running&&now-lastResult>40000&&now-lastAttempt>40000)startSR();},2000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&micWanted){keepAwake(true);if(engine==="sr"&&!running)startSR();}});
+function toast(msg){const e=$("heard");e.innerHTML=`<b>${msg}</b>`;}
+window.addEventListener("error",ev=>{const b=$("errbar");if(b)b.textContent="Erro: "+(ev.message||ev.error)+" — me mande um print disso.";});
 
 /* ================= UI ================= */
 const $=id=>document.getElementById(id);
@@ -667,27 +748,39 @@ function renderSlots(){
     b.onclick=()=>{let i=S.slot;if(i>=2&&!heroOk())i=S.cards[0]===null?0:1;if(i>2)for(let j=2;j<i;j++)if(S.cards[j]===null){i=j;break;}
       S.cards[i]=c;syncStreet();const nx=S.cards.findIndex(x=>x===null);S.slot=nx<0?6:nx;renderAll();};pk.appendChild(b);}
 }
+function renderAI(){
+  let sd=0,obs=0;for(let i=1;i<S.players;i++){const t=S.stats[i];if(t){sd+=t.sd||0;obs+=t.h||0;}}
+  $("aiBox").innerHTML=`<ul class="why" style="margin:0">
+  <li><b>Cérebro de probabilidades:</b> tabela pré-flop calculada com <b>27 milhões de mãos simuladas</b> + cerca de 6.500 mãos simuladas a cada decisão depois do flop.</li>
+  <li><b>Modelo dos oponentes (aprende com você):</b> ${S.totalHands||0} mãos narradas, ${obs} observações de jogadores, ${sd} mãos mostradas no showdown. Cada ação ajusta a estimativa das cartas de cada jogador; mãos mostradas corrigem o modelo (quem aumentou com lixo vira “blefador”).</li>
+  <li>Para a IA aprender mais rápido: diga <b>quem ganhou</b> e, quando mostrarem, <b>as cartas</b> (“J3 mostrou dama de ouros e valete de paus”).</li></ul>`;
+}
 function renderPlayers(){
-  let html=`<table class="pl"><tr><th>Jogador</th><th>Mãos</th><th>VPIP</th><th>PFR</th><th>Flop</th><th>Agr</th><th></th></tr>`;const tips=[];
+  let html=`<table class="pl"><tr><th>Jogador</th><th>Mãos</th><th>VPIP</th><th>PFR</th><th>Agr</th><th>Vit</th><th></th></tr>`;const tips=[];
   for(let i=1;i<S.players;i++){
     if(!S.occ[i]){html+=`<tr><td><b>${seatName(i)}</b></td><td colspan="5" style="color:var(--muted)">vazio</td><td><button class="mini-b in" data-in="${i}">Entrou</button></td></tr>`;continue;}
-    const t=S.stats[i]||emptyStat();const pc=x=>t.h?Math.round(100*x/t.h)+"%":"–";const p=profile(i);
-    html+=`<tr><td><b>${seatName(i)}</b> ${p.e}</td><td>${t.h}</td><td>${pc(t.vpip)}</td><td>${pc(t.pfr)}</td><td>${pc(t.flop)}</td><td>${t.calls+t.agg?((t.agg)/(Math.max(1,t.calls))).toFixed(1):"–"}</td><td><button class="mini-b out" data-out="${i}">Saiu</button></td></tr>`;
+    const t=fillStat(S.stats[i]||emptyStat());const pc=x=>t.h?Math.round(100*x/t.h)+"%":"–";const p=profile(i);
+    html+=`<tr><td><b>${seatName(i)}</b> ${p.e}</td><td>${t.h}</td><td>${pc(t.vpip)}</td><td>${pc(t.pfr)}</td><td>${t.calls+t.agg?((t.agg)/(Math.max(1,t.calls))).toFixed(1):"–"}</td><td>${t.won||0}</td><td><button class="mini-b out" data-out="${i}">Saiu</button></td></tr>`;
     if(p.n!=="Coletando dados")tips.push(`<div class="prof"><b>${seatName(i)} ${p.e} ${p.n}</b> — ${p.tip}</div>`);}
   $("players").innerHTML=html+"</table>"+tips.join("");
+  renderAI();
   $("players").querySelectorAll("[data-out]").forEach(b=>b.onclick=()=>{leaveSeat(+b.dataset.out);renderAll();});
   $("players").querySelectorAll("[data-in]").forEach(b=>b.onclick=()=>{enterSeat(+b.dataset.in);renderAll();});
 }
+function turnInfo(){const h=S.h;if(h.over)return "Mão terminada";if(h.cur<0)return h.wait?`Diga as cartas do ${["flop","turn","river"][h.street]}`:"Toque no jogador da vez";
+  return h.cur===0?"👉 Sua vez":`Vez de ${seatName(h.cur)} (${posOf(h.cur)})`;}
 const ACT={fold:["DESISTIR","v-fold"],check:["PASSAR","v-check"],call:["PAGAR","v-call"],raise:["AUMENTAR","v-raise"]};
 function renderResult(){
   const v=$("verdict");["statsPanel","oppPanel","outsPanel"].forEach(id=>$(id).style.display="none");const nb=nBoard();
-  if(!heroOk()){v.className="verdict v-wait";v.innerHTML='<div class="act" style="font-size:20px">Diga ou toque suas 2 cartas</div>';return;}
-  if(S.h.folded[0]){v.className="verdict v-wait";v.innerHTML='<div class="act" style="font-size:20px">Você desistiu</div><div class="sub">Continue marcando as ações para estudar os oponentes</div>';return;}
-  if(nb>0&&nb<3){v.className="verdict v-wait";v.innerHTML='<div class="act" style="font-size:20px">Complete o flop (3 cartas)</div>';return;}
+  const wait=(t,sub)=>{v.className="verdict v-wait";v.innerHTML=`<div class="pre">${turnInfo()}</div><div class="act" style="font-size:19px">${t}</div>${sub?`<div class="sub">${sub}</div>`:""}`;};
+  if(S.h.over&&S.h.winner!=null)return wait(`🏆 ${seatName(S.h.winner)} ganhou`,"Diga suas próximas cartas para começar a nova mão");
+  if(!heroOk())return wait("Diga suas 2 cartas","ex.: “ás de copas, rei de paus”");
+  if(S.h.folded[0])return wait("Você desistiu","Continue narrando para a IA estudar os oponentes");
+  if(nb>0&&nb<3)return wait("Complete o flop (3 cartas)");
   let a;
-  if(nb===0){a=preflopAdvice();const N=activeSeats().length-1;const sim=simulate(Array(Math.max(1,N)).fill(null),2500,true);
+  if(nb===0){a=preflopAdvice();const N=Math.max(1,Math.min(8,activeSeats().length-1));const sim={eq:EQTAB[a.h][N-1]/100};
     $("sEq").textContent=(sim.eq*100).toFixed(0)+"%";$("sNeed").textContent=(100/(N+1)).toFixed(0)+"%";$("sNeedLbl").textContent="Média justa";
-    a.why.push(`Contra ${N} mão(s) aleatória(s) até o fim você ganharia ~${(sim.eq*100).toFixed(0)}%.`);
+    a.why.push(`Tabela da IA (27 milhões de mãos simuladas): contra ${N} mão(s) aleatória(s) até o fim, ${a.h} ganha <b>${(sim.eq*100).toFixed(1)}%</b>.`);
     $("handName").textContent=a.h+" — "+(a.nota>=8.5?"Mão premium":a.nota>=7?"Mão forte":a.nota>=5?"Mão jogável":a.nota>=3?"Mão fraca":"Mão muito fraca");
   }else{a=postflopAdvice();
     $("sEq").textContent=(a.eq*100).toFixed(0)+"%";$("sNeed").textContent=a.need?(a.need*100).toFixed(0)+"%":"—";$("sNeedLbl").textContent="Precisa p/ pagar";
@@ -701,9 +794,15 @@ function renderResult(){
     if(a.oi){$("outsPanel").style.display="";const o=a.oi;
       $("outsBody").innerHTML=o.outs.length?`<div><b>${o.outs.length} outs</b> → ${(o.next*100).toFixed(0)}% na próxima carta${o.street===3?`, ${(o.byRiver*100).toFixed(0)}% até o river`:""}.</div><div class="note">Regra do ${o.street===3?4:2}: ${o.outs.length} × ${o.street===3?4:2} ≈ ${o.outs.length*(o.street===3?4:2)}%</div><div style="margin-top:6px">${o.outs.map(c=>`<span class="ctag">${cardHTML(c)}</span>`).join("")}</div>`:"<div>Nenhuma carta melhora sua categoria de mão.</div>";}
   }
+  $("statsPanel").style.display="";$("sNota").textContent=a.nota.toFixed(1);$("notaBar").style.width=(a.nota*10)+"%";
+  $("why").innerHTML=a.why.map(w=>`<li>${w}</li>`).join("");
+  const hn=$("handName").textContent;
+  if(S.h.over){wait("Quem ganhou?","Diga “J3 ganhou” e, se mostrarem, as cartas");return;}
+  if(S.h.wait){wait(`Aguardando a mesa`,`Sua mão agora: ${hn} · nota ${a.nota.toFixed(1)}`);return;}
+  if(S.h.aggSeat===0&&S.h.cur!==0){wait("Você apostou — aguardando",`Sua mão: ${hn} · nota ${a.nota.toFixed(1)}`);return;}
   const [t,cls]=ACT[a.act];const mine=S.h.cur===0;
   v.className="verdict "+cls+(mine?" mine":"");
-  v.innerHTML=`<div class="pre">${mine?"👉 Sua vez — recomendação":"Quando chegar sua vez"}</div><div class="act">${t}</div><div class="sub">${a.size||"&nbsp;"}</div>`;
+  v.innerHTML=`<div class="pre">${mine?"👉 SUA VEZ — faça isto":turnInfo()+" · sua jogada:"}</div><div class="act">${t}</div><div class="sub">${a.size||"&nbsp;"}</div>`;
   $("statsPanel").style.display="";$("sNota").textContent=a.nota.toFixed(1);$("notaBar").style.width=(a.nota*10)+"%";
   $("why").innerHTML=a.why.map(w=>`<li>${w}</li>`).join("");
 }
@@ -712,7 +811,7 @@ function renderAll(){renderSetup();renderTable();renderActs();renderLog();render
 function undoAct(){if(S.undo.length){S.h=JSON.parse(S.undo.pop());}}
 
 $("btnUndoAct").onclick=()=>{undoAct();renderAll();};
-$("btnNext").onclick=nextHand;
+$("btnNext").onclick=()=>nextHand(false);
 $("btnUndo").onclick=()=>{for(let i=6;i>=0;i--)if(S.cards[i]!==null){S.cards[i]=null;S.slot=i;break;}renderAll();};
 $("btnResetStats").onclick=()=>{S.stats={};S.handNo=1;save();renderAll();};
 const cmd=$("cmd");let idle=null;
