@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Assessor de Poker</title>
+<style>
+:root{
+  --bg:#0d1f17; --felt:#14402b; --felt2:#1b5236; --card:#fff; --ink:#f3f1e8; --muted:#a9c2b3;
+  --gold:#e8c35a; --red:#e04848; --green:#2fb36a; --blue:#3a8ee6; --gray:#7d8a84;
+  --s0:#111; --s1:#d32f2f; --s2:#1e6fd9; --s3:#15893f;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:40px}
+header{padding:12px 12px 4px;display:flex;align-items:center;justify-content:space-between}
+h1{font-size:19px;margin:0}
+h1 span{color:var(--gold)}
+.wrap{max-width:560px;margin:0 auto;padding:0 10px}
+.panel{background:var(--felt);border-radius:16px;padding:12px;margin:10px 0}
+.panel h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 8px;font-weight:600}
+.lbl{font-size:13px;color:var(--muted);margin:8px 0 5px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;min-width:42px;border:0;border-radius:10px;padding:9px 6px;background:var(--felt2);color:var(--ink);font-size:14px;font-weight:600}
+.seg button.on{background:var(--gold);color:#1a1a1a}
+.tag{display:inline-block;background:var(--felt2);border-radius:8px;padding:2px 7px;font-size:12px;margin:2px 3px 2px 0}
+.ctag{display:inline-block;background:#fff;border-radius:6px;padding:2px 6px;margin:2px;font-weight:800;font-size:13px}
+.c0{color:var(--s0)}.c1{color:var(--s1)}.c2{color:var(--s2)}.c3{color:var(--s3)}
+
+/* mesa */
+.table{position:relative;height:300px;margin:6px 0 4px}
+.oval{position:absolute;left:9%;right:9%;top:13%;bottom:13%;border-radius:50%;background:radial-gradient(ellipse at center,#1f6b44 0%,#164f33 70%);border:6px solid #5b3b1f;box-shadow:inset 0 0 20px rgba(0,0,0,.5)}
+.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:56%}
+.center .bd{display:flex;gap:3px;justify-content:center;min-height:34px}
+.mc{width:24px;height:33px;border-radius:4px;background:#fff;font-weight:800;font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.mc.e{background:rgba(0,0,0,.2);border:1px dashed rgba(255,255,255,.25)}
+.center .info{font-size:12px;color:#d9eadf;margin-top:4px}
+.seat{position:absolute;transform:translate(-50%,-50%);width:70px;min-height:54px;border-radius:12px;background:#0f2a1d;border:2px solid #2c5a42;text-align:center;padding:3px 2px;font-size:11px}
+.seat .nm{font-weight:800;font-size:13px}
+.seat .ps{display:inline-block;background:#2c5a42;border-radius:6px;padding:0 4px;font-size:10px;font-weight:700}
+.seat .ps.btn{background:#fff;color:#111}
+.seat .ps.bl{background:#7a5a12;color:#fff}
+.seat .la{font-size:10.5px;margin-top:1px;min-height:13px;font-weight:600}
+.seat .pf{font-size:12px;position:absolute;top:-9px;right:-6px}
+.seat.me{border-color:var(--gold)}
+.seat.turn{border-color:#fff;box-shadow:0 0 0 3px var(--gold),0 0 18px var(--gold);background:#2c5a42}
+.seat.folded{opacity:.35}
+.la.fold{color:#ff8a8a}.la.check{color:#cfd8d3}.la.call{color:#8cc4ff}.la.raise{color:#7ef0a8}.la.allin{color:var(--gold)}
+
+/* ações */
+.turnbar{font-weight:800;font-size:16px;text-align:center;margin-bottom:8px}
+.turnbar.me{color:var(--gold)}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.acts button{border:0;border-radius:11px;padding:12px 4px;font-weight:800;font-size:14px;color:#fff}
+.b-fold{background:var(--red)}.b-check{background:var(--gray)}.b-call{background:var(--blue)}.b-raise{background:var(--green)}.b-allin{background:#b8860b}
+.btns{display:flex;gap:8px;margin-top:8px}
+.btn{flex:1;border:0;border-radius:12px;padding:11px;font-weight:700;font-size:14px;background:var(--felt2);color:var(--ink)}
+.btn.gold{background:var(--gold);color:#1a1a1a}
+.log{font-size:12px;color:var(--muted);margin-top:8px;max-height:72px;overflow:auto}
+
+/* voz */
+.voice{display:flex;gap:6px}
+.voice input{flex:1;font-size:16px;border-radius:12px;border:2px solid var(--gold);background:#0f2a1d;color:var(--ink);padding:11px}
+.voice button{border:0;border-radius:12px;background:var(--gold);color:#111;font-weight:800;padding:0 14px;font-size:15px}
+.mic{width:100%;border:0;border-radius:14px;padding:15px;font-weight:800;font-size:16px;background:var(--gold);color:#111}
+.mic.on{background:var(--red);color:#fff;animation:rec 1.6s ease-in-out infinite}
+.mic.starting{background:var(--felt2);color:var(--ink)}
+.mic.blocked{background:#5a2b2b;color:#fff}
+@keyframes rec{50%{box-shadow:0 0 0 6px rgba(224,72,72,.35)}}
+#interim{font-size:14px;color:#fff;min-height:20px;margin:6px 0 2px;font-style:italic}
+.seat.empty{opacity:.4;border-style:dashed}
+.mini-b{border:0;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700;background:var(--felt2);color:var(--ink)}
+.mini-b.out{background:#6b2a2a}.mini-b.in{background:#2a6b45}
+.heard{font-size:13px;margin-top:6px;min-height:18px}
+.heard b{color:var(--gold)}
+
+/* cartas */
+.slots{display:flex;gap:5px;align-items:center;justify-content:center}
+.slot{width:48px;height:66px;border-radius:9px;border:2px dashed rgba(255,255,255,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:20px;background:rgba(0,0,0,.15);color:var(--muted)}
+.slot.sm{width:42px;height:58px;font-size:17px}
+.slot.filled{background:#fff;border:2px solid #fff}
+.slot.active{border:2px solid var(--gold);box-shadow:0 0 0 3px rgba(232,195,90,.35)}
+.slot .su{font-size:20px;line-height:1}
+.gap{width:8px}
+.picker{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;margin-top:10px}
+.picker button{border:0;border-radius:6px;background:#fff;padding:6px 0 4px;font-weight:800;font-size:13px;line-height:1.05;display:flex;flex-direction:column;align-items:center}
+.picker button:disabled{opacity:.18}
+
+.verdict{border-radius:16px;padding:12px;text-align:center;margin:10px 0;color:#fff}
+.verdict .pre{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.9}
+.verdict .act{font-size:30px;font-weight:900;letter-spacing:1px}
+.verdict .sub{font-size:14px;opacity:.95}
+.verdict.mine{box-shadow:0 0 0 3px #fff;animation:pulse 1.2s ease-in-out 2}
+@keyframes pulse{50%{transform:scale(1.03)}}
+.v-fold{background:var(--red)}.v-check{background:var(--gray)}.v-call{background:var(--blue)}.v-raise{background:var(--green)}.v-wait{background:var(--felt2);color:var(--muted)}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat{background:var(--felt2);border-radius:12px;padding:8px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11px;color:var(--muted)}
+.bar{height:10px;background:rgba(0,0,0,.3);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--gold),var(--green))}
+ul.why{margin:6px 0 0;padding-left:18px}
+ul.why li{margin:4px 0}
+table.dist{width:100%;border-collapse:collapse;font-size:13px}
+table.dist td{padding:4px 2px;vertical-align:middle}
+table.dist td:first-child{width:38%}
+table.dist td:last-child{width:46px;text-align:right}
+.mini{height:8px;border-radius:5px;background:var(--gold)}
+.mini.hot{background:var(--red)}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+.warn{background:rgba(224,72,72,.18);border-left:3px solid var(--red);padding:6px 8px;border-radius:6px;margin:5px 0;font-size:13px}
+table.pl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.pl th{color:var(--muted);font-weight:600;text-align:center;padding:4px 2px}
+table.pl td{text-align:center;padding:6px 2px;border-top:1px solid rgba(255,255,255,.08)}
+table.pl td:first-child,table.pl th:first-child{text-align:left}
+.prof{font-size:12px;margin:6px 0;padding:6px 8px;background:var(--felt2);border-radius:8px}
+details{background:var(--felt);border-radius:16px;padding:12px;margin:10px 0}
+details summary{font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<header class="wrap"><h1>♠ Assessor de <span>Poker</span></h1><span class="tag" id="handTag">Mão 1</span></header>
+<div class="wrap">
+
+<details class="panel" id="setup">
+  <summary>⚙️ Configurar mesa</summary>
+  <div class="lbl">Jogadores na mesa (você + computadores)</div>
+  <div class="seg" id="segPlayers"></div>
+  <div class="lbl">Sua posição NESTA mão (depois gira sozinho no sentido horário)</div>
+  <div class="seg" id="segPos"></div>
+  <div class="lbl">Estilo padrão dos computadores (usado até ter dados)</div>
+  <div class="seg" id="segStyle"></div>
+  <div class="btns"><button class="btn" id="btnResetStats">Zerar estatísticas dos jogadores</button></div>
+</details>
+
+<div class="panel">
+  <div class="table" id="table"><div class="oval"></div><div class="center"><div class="bd" id="miniBoard"></div><div class="info" id="centerInfo"></div></div></div>
+</div>
+
+<div class="panel">
+  <h2>🎤 Narração ao vivo</h2>
+  <button class="mic" id="micMain">🎙️ Ligar microfone (fica ligado)</button>
+  <div class="note" id="micMsg">Toque uma vez para ligar. Ele fica ouvindo até você pausar.</div>
+  <div id="interim"></div>
+  <div class="heard" id="heard"></div>
+  <div class="lbl">Ou digite / use o 🎤 do teclado:</div>
+  <div class="voice">
+    <input id="cmd" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Toque e use o 🎤 do teclado">
+    <button id="cmdOk">OK</button>
+  </div>
+  <div class="heard" id="heard"></div>
+  <div class="note">Ex.: <i>“5 de copas, 6 de árvore”</i> · <i>“J1 passou, J2 desistiu, J3 aumentou meio pote”</i> · <i>“eu paguei”</i> · <i>“J4 saiu”</i> · <i>“entrou novo jogador na J4”</i> · <i>“próxima mão”</i> · <i>“desfazer”</i> · <i>“pausar microfone”</i></div>
+</div>
+
+<div class="panel" id="actPanel">
+  <div class="turnbar" id="turnbar"></div>
+  <div class="acts" id="acts"></div>
+  <div class="btns">
+    <button class="btn" id="btnUndoAct">↶ Desfazer ação</button>
+    <button class="btn gold" id="btnNext">Próxima mão ➜</button>
+  </div>
+  <div class="log" id="log"></div>
+</div>
+
+<div id="verdict" class="verdict v-wait"><div class="act">Diga ou toque suas 2 cartas</div></div>
+
+<div class="panel">
+  <h2>Cartas — toque no espaço e escolha</h2>
+  <div class="slots" id="slots"></div>
+  <div class="picker" id="picker"></div>
+  <div class="btns"><button class="btn" id="btnUndo">↶ Apagar última carta</button></div>
+</div>
+
+<div class="panel" id="statsPanel" style="display:none">
+  <h2>Força da sua mão</h2>
+  <div class="stats">
+    <div class="stat"><b id="sNota">–</b><span>Nota (0–10)</span></div>
+    <div class="stat"><b id="sEq">–</b><span>Chance de ganhar</span></div>
+    <div class="stat"><b id="sNeed">–</b><span id="sNeedLbl">Precisa p/ pagar</span></div>
+  </div>
+  <div class="bar"><i id="notaBar" style="width:0"></i></div>
+  <div class="lbl" id="handName" style="color:var(--ink);font-weight:700;font-size:15px"></div>
+  <ul class="why" id="why"></ul>
+</div>
+
+<div class="panel" id="oppPanel" style="display:none">
+  <h2>O que os oponentes podem ter AGORA</h2>
+  <div id="boardWarn"></div>
+  <div class="lbl">Melhor mão entre os oponentes (chance):</div>
+  <table class="dist" id="dist"></table>
+  <div class="note" id="oppNote"></div>
+</div>
+
+<div class="panel" id="outsPanel" style="display:none">
+  <h2>Suas outs (cartas que melhoram sua mão)</h2>
+  <div id="outsBody"></div>
+</div>
+
+<div class="panel">
+  <h2>📊 Padrões dos jogadores</h2>
+  <div id="players"></div>
+  <div class="note">VPIP = % das mãos em que entra no pote · PFR = % que aumenta antes do flop · Agr = apostas÷pagamentos depois do flop. Precisa de ~15 mãos para o perfil ficar confiável. O assessor usa esses dados para estimar as mãos de cada um.</div>
+</div>
+
+<details>
+  <summary>📚 Ranking das mãos</summary>
+  <ol class="why">
+    <li><b>Straight Flush</b> — 5 em sequência do mesmo naipe</li><li><b>Quadra</b></li><li><b>Full House</b> — trinca + par</li>
+    <li><b>Flush</b> — 5 do mesmo naipe</li><li><b>Sequência</b></li><li><b>Trinca</b></li><li><b>Dois pares</b></li><li><b>Um par</b></li><li><b>Carta alta</b></li>
+  </ol>
+</details>
+<details>
+  <summary>🎤 Dicas da voz no iPhone</summary>
+  <ul class="why">
+    <li>Toque na caixa de comando e aperte o <b>microfone do teclado</b> (se não aparecer: Ajustes › Geral › Teclado › Ativar Ditado).</li>
+    <li>Naipes: <b>copas/coração</b> ♥ · <b>espada</b> ♠ · <b>ouros/losango</b> ♦ · <b>paus/árvore/trevo</b> ♣.</li>
+    <li>Cartas: ás, 2–10, valete/J, dama/Q, rei/K. Também pode digitar curto: <b>5c 6p je</b> (c=copas, e=espadas, o=ouros, p=paus).</li>
+    <li>Ações: desistiu · passou · pagou · aumentou (pouco / meio pote / pote) · all-in. Pode falar várias seguidas: elas vão para os jogadores na ordem.</li>
+    <li>Com o microfone ligado, narre normalmente: <b>“J1 passou, J2 desistiu, J3 aumentou”</b>. Diga o nome do jogador antes da ação para corrigir a vez automaticamente.</li>
+    <li>Sua ação: <b>“eu paguei”</b>, “aumentei”, “desisti”.</li>
+    <li>Mesa: <b>“J4 saiu”</b> esvazia a cadeira; <b>“entrou novo jogador na J4”</b> coloca um novo com contagem zerada (joga a partir da próxima mão).</li>
+    <li>Toque no botão vermelho (ou diga “pausar microfone”) para pausar durante uma ligação.</li>
+    <li>Na caixa de texto, o comando é lido depois de 1,5 s de silêncio ou ao tocar OK.</li>
+  </ul>
+</details>
+<details>
+  <summary>🎓 Como o assessor decide</summary>
+  <ul class="why">
+    <li><b>Pré-flop:</b> tabelas de abertura por posição (estratégia GTO simplificada de 6 jogadores) + o que aconteceu antes de você (limp, aumento, re-aumento).</li>
+    <li><b>Pós-flop:</b> simula milhares de mãos contra os oponentes que continuam, usando o perfil de cada um (quem joga muitas mãos tem mãos mais fracas em média; quem aumentou tem mãos mais fortes).</li>
+    <li><b>Odds do pote:</b> para pagar, sua chance precisa ser maior que aposta ÷ (pote + 2×aposta). Meio pote → 25%; pote → 33%.</li>
+    <li><b>Regra do 4 e 2:</b> outs × 4 no flop, × 2 no turn ≈ % de acertar.</li>
+    <li>Não existe estratégia literalmente perfeita para 6 jogadores; esta é uma aproximação sólida para treinar os fundamentos.</li>
+  </ul>
+</details>
+</div>
+
+<script>
+"use strict";
+const RANKS="23456789TJQKA", SUITS="♠♥♦♣";
+const RNAME=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+const RFULL=["2","3","4","5","6","7","8","9","10","Valete","Dama","Rei","Ás"];
+const RPLUR=["Dois","Três","Quatros","Cincos","Seis","Setes","Oitos","Noves","Dez","Valetes","Damas","Reis","Ases"];
+const CATN=["Carta alta","Um par","Dois pares","Trinca","Sequência","Flush","Full House","Quadra","Straight Flush"];
+const rk=c=>c>>2, st=c=>c&3;
+
+/* ================= Avaliador ================= */
+const _rc=new Int8Array(13), _sc=new Int8Array(4), _sm=new Int32Array(4);
+function straightHigh(mask){const m=(mask<<1)|((mask>>12)&1);for(let h=13;h>=4;h--){if(((m>>(h-4))&31)===31)return h-1;}return -1;}
+function evaluate(cards){
+  _rc.fill(0);_sc.fill(0);_sm.fill(0);let all=0;
+  for(let i=0;i<cards.length;i++){const c=cards[i],r=c>>2,s=c&3;_rc[r]++;_sc[s]++;_sm[s]|=1<<r;all|=1<<r;}
+  let fs=-1;for(let s=0;s<4;s++)if(_sc[s]>=5)fs=s;
+  if(fs>=0){const sf=straightHigh(_sm[fs]);if(sf>=0)return (8<<20)|(sf<<16);}
+  let q=-1,t1=-1,t2=-1,p1=-1,p2=-1;
+  for(let r=12;r>=0;r--){const n=_rc[r];
+    if(n===4){if(q<0)q=r;}else if(n===3){if(t1<0)t1=r;else if(t2<0)t2=r;}else if(n===2){if(p1<0)p1=r;else if(p2<0)p2=r;}}
+  const kick=(e1,e2,k)=>{let v=0,g=0;for(let r=12;r>=0&&g<k;r--){if(_rc[r]&&r!==e1&&r!==e2){v=(v<<4)|r;g++;}}while(g<k){v<<=4;g++;}return v;};
+  if(q>=0)return (7<<20)|(q<<16)|(kick(q,-1,1)<<12);
+  if(t1>=0&&(t2>=0||p1>=0)){return (6<<20)|(t1<<16)|(Math.max(t2,p1)<<12);}
+  if(fs>=0){let v=0,g=0;for(let r=12;r>=0&&g<5;r--)if(_sm[fs]&(1<<r)){v=(v<<4)|r;g++;}return (5<<20)|v;}
+  const s=straightHigh(all);if(s>=0)return (4<<20)|(s<<16);
+  if(t1>=0)return (3<<20)|(t1<<16)|(kick(t1,-1,2)<<8);
+  if(p2>=0)return (2<<20)|(p1<<16)|(p2<<12)|(kick(p1,p2,1)<<8);
+  if(p1>=0)return (1<<20)|(p1<<16)|(kick(p1,-1,3)<<4);
+  return kick(-1,-1,5);
+}
+const cat=v=>v>>20;
+
+/* ================= Ranges ================= */
+function code(a,b){let r1=rk(a),r2=rk(b);if(r2>r1)[r1,r2]=[r2,r1];if(r1===r2)return RANKS[r1]+RANKS[r2];return RANKS[r1]+RANKS[r2]+(st(a)===st(b)?"s":"o");}
+function chen(r1,r2,suited){const hv=r=>r===12?10:r===11?8:r===10?7:r===9?6:(r+2)/2;let s=hv(r1);
+  if(r1===r2)return Math.max(5,s*2)+r1*0.01;if(suited)s+=2;const gap=r1-r2-1;s-=[0,1,2,4][gap]??5;if(gap<=1&&r1<10)s+=1;return s+r1*0.01+r2*0.001;}
+const ALLH=[];
+for(let a=12;a>=0;a--)for(let b=a;b>=0;b--){if(a===b)ALLH.push({c:RANKS[a]+RANKS[b],v:chen(a,b,false),n:6});
+  else{ALLH.push({c:RANKS[a]+RANKS[b]+"s",v:chen(a,b,true),n:4});ALLH.push({c:RANKS[a]+RANKS[b]+"o",v:chen(a,b,false),n:12});}}
+ALLH.sort((x,y)=>y.v-x.v);
+const TOP={};{let cum=0;for(const h of ALLH){TOP[h.c]=(cum+h.n/2)/1326;cum+=h.n;}}
+function parseRange(str){const set=new Set();
+  for(let tok of str.split(",").map(x=>x.trim()).filter(Boolean)){const plus=tok.endsWith("+");if(plus)tok=tok.slice(0,-1);
+    const a=RANKS.indexOf(tok[0]),b=RANKS.indexOf(tok[1]),sfx=tok[2]||"";
+    if(a===b){for(let r=a;r<=(plus?12:a);r++)set.add(RANKS[r]+RANKS[r]);}
+    else if(plus){for(let r=b;r<a;r++)set.add(RANKS[a]+RANKS[r]+sfx);}
+    else{if(sfx)set.add(tok);else{set.add(tok+"s");set.add(tok+"o");}}}
+  return set;}
+const RFI={
+  UTG:parseRange("22+,A2s+,K9s+,Q9s+,J9s+,T9s,98s,87s,76s,AJo+,KQo"),
+  MP:parseRange("22+,A2s+,K8s+,Q9s+,J9s+,T8s+,97s+,86s+,76s,65s,ATo+,KJo+,QJo"),
+  CO:parseRange("22+,A2s+,K5s+,Q8s+,J8s+,T8s+,97s+,86s+,75s+,64s+,54s,A8o+,KTo+,QTo+,JTo"),
+  BTN:parseRange("22+,A2s+,K2s+,Q4s+,J6s+,T6s+,96s+,85s+,74s+,64s+,53s+,43s,A2o+,K8o+,Q9o+,J9o+,T8o+,98o,87o"),
+  SB:parseRange("22+,A2s+,K4s+,Q6s+,J7s+,T7s+,97s+,86s+,75s+,65s,54s,A5o+,K9o+,QTo+,JTo"),
+};
+const ISO=parseRange("66+,A9s+,KTs+,QTs+,JTs,ATo+,KJo+");
+const OVERLIMP=parseRange("22+,A2s+,K9s+,QTs+,JTs,T9s,98s,87s,76s,65s,54s");
+const VAL3B=parseRange("QQ+,AKs,AKo"), BLUFF3B=parseRange("A5s,A4s");
+const CALLRAISE=parseRange("22+,ATs+,KJs+,QJs,JTs,T9s,98s,AQo");
+const BBDEF=parseRange("22+,A2s+,K7s+,Q8s+,J8s+,T8s+,97s+,86s+,75s+,65s,54s,A8o+,KTo+,QTo+,JTo");
+const VS3B_4B=parseRange("KK+,AKs"), VS3B_CALL=parseRange("QQ,JJ,AKo,AQs");
+const maskCache={};
+function getMask(frac){if(frac>=0.97)return null;const key=Math.round(frac*40);if(maskCache[key])return maskCache[key];
+  const f=key/40,set=new Set();for(const h of ALLH)if(TOP[h.c]<=f)set.add(h.c);
+  const m=new Uint8Array(2704);for(let a=0;a<52;a++)for(let b=0;b<52;b++)if(a!==b&&set.has(code(a,b)))m[a*52+b]=1;
+  return maskCache[key]=m;}
+
+/* ================= Estado ================= */
+const POSLIST={2:["BTN","BB"],3:["BTN","SB","BB"],4:["CO","BTN","SB","BB"],5:["MP","CO","BTN","SB","BB"],
+  6:["UTG","MP","CO","BTN","SB","BB"],7:["UTG","UTG+1","MP","CO","BTN","SB","BB"],
+  8:["UTG","UTG+1","MP","HJ","CO","BTN","SB","BB"],9:["UTG","UTG+1","UTG+2","MP","HJ","CO","BTN","SB","BB"]};
+const rangeKey=p=>({"UTG+1":"UTG","UTG+2":"UTG",HJ:"MP"}[p]||p);
+const STYLE={loose:{lbl:"Soltos",frac:0.95},normal:{lbl:"Normais",frac:0.45},tight:{lbl:"Apertados",frac:0.22}};
+const S={players:6,occ:[true,true,true,true,true,true],buttonSeat:0,style:"normal",stats:{},handNo:1,
+  cards:[null,null,null,null,null,null,null],slot:0,h:null,undo:[]};
+try{const sv=JSON.parse(localStorage.getItem("pokerAssessor.v3")||"null");if(sv){Object.assign(S,{players:sv.players,occ:sv.occ,buttonSeat:sv.buttonSeat,style:sv.style,stats:sv.stats||{},handNo:sv.handNo||1});}}catch(e){}
+if(!Array.isArray(S.occ)||S.occ.length!==S.players)S.occ=Array(S.players).fill(true);S.occ[0]=true;
+function save(){try{localStorage.setItem("pokerAssessor.v3",JSON.stringify({players:S.players,occ:S.occ,buttonSeat:S.buttonSeat,style:S.style,stats:S.stats,handNo:S.handNo}));}catch(e){}}
+const seatName=i=>i===0?"Você":"J"+i;
+const occList=()=>[...Array(S.players).keys()].filter(i=>S.occ[i]);
+function fixButton(){if(!S.occ[S.buttonSeat])S.buttonSeat=nextOcc(S.buttonSeat);}
+function nextOcc(from){for(let k=1;k<=S.players;k++){const s=(from+k)%S.players;if(S.occ[s])return s;}return 0;}
+function posOf(seat){const L0=occList(),n=L0.length;if(!S.occ[seat]||n<2)return "–";const L=POSLIST[n],b=L.indexOf("BTN");
+  const bi=L0.indexOf(S.buttonSeat),i=L0.indexOf(seat);return L[((i-bi+b)%n+n)%n];}
+function seatOfPos(p){const L0=occList(),n=L0.length,L=POSLIST[n],b=L.indexOf("BTN"),k=L.indexOf(p),bi=L0.indexOf(S.buttonSeat);return L0[((bi+k-b)%n+n)%n];}
+function setMyPos(p){const L0=occList(),n=L0.length,L=POSLIST[n],b=L.indexOf("BTN"),k=L.indexOf(p),mi=L0.indexOf(0);S.buttonSeat=L0[((mi-k+b)%n+n)%n];}
+const emptyStat=()=>({h:0,vpip:0,pfr:0,flop:0,agg:0,calls:0});
+
+function newHand(){
+  const N=S.players;fixButton();
+  S.h={street:0,folded:S.occ.map(o=>!o),dealt:S.occ.slice(),allin:Array(N).fill(false),need:[],cur:-1,raises:0,limps:0,facing:"none",aggSeat:-1,
+    over:false,wait:false,last:S.occ.map(o=>o?"":"vazio"),lastCls:Array(N).fill(""),log:[],acted:false,
+    flags:Array.from({length:N},()=>({vpip:false,pfr:false,flop:false,agg:0,calls:0}))};
+  S.h.need=occList();
+  S.h.cur=occList().length>=2?seatOfPos(POSLIST[occList().length][0]):-1;
+  S.undo=[];
+}
+function activeSeats(){return [...Array(S.players).keys()].filter(i=>!S.h.folded[i]);}
+function nextNeed(from){const N=S.players;for(let k=1;k<=N;k++){const s=(from+k)%N;if(S.h.need.includes(s))return s;}return -1;}
+function startStreet(street){
+  const h=S.h;h.street=street;h.facing="none";h.aggSeat=-1;h.wait=false;
+  h.last=h.last.map((x,i)=>h.folded[i]?x:(h.allin[i]?"ALL-IN":""));h.lastCls=h.lastCls.map((x,i)=>h.folded[i]?x:(h.allin[i]?"allin":""));
+  if(street===1)activeSeats().forEach(i=>h.flags[i].flop=true);
+  h.need=activeSeats().filter(i=>!h.allin[i]);
+  if(h.need.length<=1){h.need=[];h.cur=-1;h.wait=street<3;if(street===3)h.over=true;return;}
+  h.cur=nextNeed(S.buttonSeat);
+}
+const SIZEORD={none:0,small:1,half:2,pot:3,over:4};
+const ACTTXT={fold:"desistiu",check:"passou",call:"pagou",raise:"aumentou",allin:"ALL-IN"};
+const ACTME={fold:"desisti",check:"passei",call:"paguei",raise:"aumentei",allin:"fui all-in"};
+const SIZETXT={small:" ⅓",half:" ½",pot:" pote",over:" 2×"};
+function afterMove(s){
+  const h=S.h,act=activeSeats();
+  if(act.length===1){h.over=true;h.cur=-1;h.log.push(`🏆 ${seatName(act[0])} levou o pote`);return;}
+  if(h.need.length===0){h.cur=-1;if(h.street===3){h.over=true;h.log.push("Fim das apostas: showdown");}else h.wait=true;return;}
+  if(h.cur===s||h.cur<0||!h.need.includes(h.cur))h.cur=nextNeed(s);
+}
+function doAction(type,size,seat){
+  const h=S.h;if(h.over)return "a mão já terminou";
+  if(seat!=null&&seat>=0){
+    if(seat>=S.players||!S.occ[seat])return `${seatName(seat)} não está na mesa`;
+    if(h.folded[seat])return `${seatName(seat)} já está fora da mão`;
+  }else if(h.cur<0)return h.wait?"coloque as cartas da mesa":"sem jogador da vez";
+  S.undo.push(JSON.stringify(h));
+  if(seat!=null&&seat>=0&&seat!==h.cur){h.cur=seat;h.wait=false;if(!h.need.includes(seat))h.need.push(seat);}
+  const s=h.cur,f=h.flags[s];h.acted=true;
+  if(h.street===0){
+    if(type==="call"||type==="raise"||type==="allin"){if(!(type==="call"&&h.raises===0&&posOf(s)==="BB"))f.vpip=true;}
+    if(type==="raise"||type==="allin"){f.pfr=true;h.raises++;}
+    if(type==="call"&&h.raises===0&&posOf(s)!=="BB")h.limps++;
+  }else{
+    if(type==="raise"||type==="allin"){f.agg++;h.aggSeat=s;}
+    if(type==="call")f.calls++;
+    if(type==="raise"){const sz=size||"half";h.facing=h.facing==="none"?sz:(SIZEORD[sz]>=3?"over":"pot");}
+    if(type==="allin")h.facing="over";
+  }
+  const txt=ACTTXT[type]+(h.street>0&&type==="raise"?SIZETXT[size||"half"]:"");
+  h.last[s]=s===0?ACTME[type]:txt;h.lastCls[s]=type;
+  h.log.push(`${seatName(s)} (${posOf(s)}) ${s===0?ACTME[type]:txt}`);
+  if(type==="fold"){h.folded[s]=true;h.need=h.need.filter(x=>x!==s);}
+  else if(type==="check"||type==="call"){h.need=h.need.filter(x=>x!==s);}
+  else{if(type==="allin")h.allin[s]=true;h.need=activeSeats().filter(x=>x!==s&&!h.allin[x]);}
+  afterMove(s);
+  return "";
+}
+function leaveSeat(seat){
+  if(seat<=0||seat>=S.players)return "assento inválido";if(!S.occ[seat])return `${seatName(seat)} já estava vazio`;
+  const h=S.h;S.undo.push(JSON.stringify(h));
+  S.occ[seat]=false;delete S.stats[seat];
+  if(!h.folded[seat]&&!h.over){h.folded[seat]=true;h.need=h.need.filter(x=>x!==seat);afterMove(seat);}
+  h.dealt[seat]=false;h.last[seat]="saiu";h.lastCls[seat]="fold";h.log.push(`🚪 ${seatName(seat)} saiu da mesa`);
+  save();return "";
+}
+function enterSeat(seat){
+  if(seat<=0||seat>=S.players)return "assento inválido";
+  S.occ[seat]=true;S.stats[seat]=emptyStat();
+  S.h.last[seat]="novo · próx. mão";S.h.lastCls[seat]="check";S.h.log.push(`🆕 Novo jogador em ${seatName(seat)} (contagem zerada)`);
+  save();return "";
+}
+function commitStats(){
+  const h=S.h;if(!h||!h.acted)return;
+  for(let i=1;i<S.players;i++){if(!h.dealt[i]||!S.occ[i])continue;const t=S.stats[i]||(S.stats[i]=emptyStat());const f=h.flags[i];
+    t.h++;if(f.vpip)t.vpip++;if(f.pfr)t.pfr++;if(f.flop)t.flop++;t.agg+=f.agg;t.calls+=f.calls;}
+}
+function nextHand(){
+  commitStats();S.handNo++;
+  S.buttonSeat=nextOcc(S.buttonSeat);
+  S.cards=[null,null,null,null,null,null,null];S.slot=0;newHand();save();renderAll();window.scrollTo({top:0,behavior:"smooth"});
+}
+function syncStreet(){
+  const nb=nBoard();const ns=nb>=5?3:nb===4?2:nb>=3?1:0;
+  if(ns>S.h.street&&!S.h.over){S.undo.push(JSON.stringify(S.h));for(let s=S.h.street+1;s<=ns;s++)startStreet(s);}
+}
+
+/* ================= Perfis ================= */
+function smooth(seat){const t=S.stats[seat]||{h:0,vpip:0,pfr:0,flop:0,agg:0,calls:0};const d=STYLE[S.style].frac,K=6;
+  return {n:t.h,vpip:(t.vpip+d*K)/(t.h+K),pfr:(t.pfr+d*0.4*K)/(t.h+K),af:(t.agg+1)/(t.calls+1),raw:t};}
+function profile(seat){const p=smooth(seat),t=p.raw;
+  if(t.h<5)return {e:"❔",n:"Coletando dados",tip:`Precisa de mais mãos (${t.h}/5).`};
+  const v=t.vpip/t.h,r=t.pfr/t.h,af=(t.agg+0.5)/(t.calls+0.5);
+  if(v>=0.45&&(af>=1.5||r>=0.25))return {e:"🔥",n:"Maníaco",tip:"Aposta e aumenta demais: pague com mãos médias e deixe ele blefar."};
+  if(v>=0.40)return {e:"🐟",n:"Paga tudo",tip:"Entra e paga muito: NÃO blefe; aposte forte quando tiver mão."};
+  if(v<0.22&&r>=0.12)return {e:"🦈",n:"Apertado-agressivo",tip:"Joga poucas mãos e bem: respeite os aumentos dele."};
+  if(v<0.22)return {e:"🪨",n:"Pedra",tip:"Quase não joga; quando aposta tem mão. Roube os blinds dele."};
+  if(r/Math.max(v,0.01)>=0.55)return {e:"⚡",n:"Solto-agressivo",tip:"Joga muitas mãos aumentando: re-aumente mais leve contra ele."};
+  return {e:"😐",n:"Solto-passivo",tip:"Entra muito só pagando: aumente para isolar e aposte valor."};
+}
+function oppFrac(seat){const p=smooth(seat);let f=S.h.flags[seat].pfr?p.pfr:p.vpip;if(S.h.raises>=2&&S.h.flags[seat].pfr)f*=0.5;return Math.max(0.04,Math.min(1,f));}
+
+/* ================= Simulação ================= */
+function nBoard(){let n=0;for(let i=2;i<7;i++)if(S.cards[i]!==null)n++;return n;}
+function heroOk(){return S.cards[0]!==null&&S.cards[1]!==null;}
+function unseen(){const used=new Set(S.cards.filter(c=>c!==null));const u=[];for(let c=0;c<52;c++)if(!used.has(c))u.push(c);return u;}
+function simulate(masks,iters,future){
+  const hero=[S.cards[0],S.cards[1]];const board=S.cards.slice(2).filter(c=>c!==null);
+  const pool=unseen();const n=masks.length;let win=0,ahead=0;const bestCat=new Float64Array(9);const opp=new Int8Array(n*2);
+  for(let it=0;it<iters;it++){let len=pool.length;
+    const draw=()=>{const j=(Math.random()*len)|0;const c=pool[j];pool[j]=pool[len-1];pool[len-1]=c;len--;return c;};
+    for(let o=0;o<n;o++){const m=masks[o];let a,b,t=0;while(true){a=draw();b=draw();if(!m||m[a*52+b]||t>40)break;len+=2;t++;}opp[o*2]=a;opp[o*2+1]=b;}
+    const bd=board.slice();if(future)while(bd.length<5)bd.push(draw());
+    const hv=evaluate(hero.concat(bd));let best=-1,ties=0,bc=0;
+    for(let o=0;o<n;o++){const v=evaluate([opp[o*2],opp[o*2+1]].concat(bd));if(v>best){best=v;ties=0;}else if(v===best)ties++;if(cat(v)>bc)bc=cat(v);}
+    bestCat[bc]++;if(hv>best)win++;else if(hv===best)win+=1/(ties+2);if(best>hv)ahead++;}
+  return {eq:win/iters,bestCat:Array.from(bestCat,x=>x/iters),ahead:ahead/iters};
+}
+function describe(v){const c=cat(v),a=(v>>16)&15,b=(v>>12)&15;
+  switch(c){case 8:return a===12?"Royal Flush!!":"Straight Flush até o "+RFULL[a];case 7:return "Quadra de "+RPLUR[a];
+    case 6:return "Full House: "+RPLUR[a]+" com "+RPLUR[b];case 5:return "Flush com "+RFULL[a]+" alto";case 4:return "Sequência até o "+RFULL[a];
+    case 3:return "Trinca de "+RPLUR[a];case 2:return "Dois pares: "+RPLUR[a]+" e "+RPLUR[b];case 1:return "Par de "+RPLUR[a];default:return "Carta alta: "+RFULL[a];}}
+function boardWarnings(board){const w=[];const sc=[0,0,0,0],rc=new Array(13).fill(0);let mask=0;
+  for(const c of board){sc[st(c)]++;rc[rk(c)]++;mask|=1<<rk(c);}const mx=Math.max(...sc);
+  if(mx>=4)w.push("4 do mesmo naipe na mesa: 1 carta desse naipe já faz flush.");else if(mx===3)w.push("3 do mesmo naipe na mesa: flush possível.");
+  else if(mx===2&&board.length===3)w.push("2 do mesmo naipe: alguém pode ter projeto de flush.");
+  if(rc.some(n=>n>=2))w.push("Mesa pareada: full house e quadra são possíveis.");
+  const m=(mask<<1)|((mask>>12)&1);let mx5=0;for(let lo=0;lo<=9;lo++){let n=0;for(let k=0;k<5;k++)if(m&(1<<(lo+k)))n++;mx5=Math.max(mx5,n);}
+  if(mx5>=3)w.push("Cartas próximas na mesa: sequência possível.");return w;}
+
+/* ================= Conselhos ================= */
+function preflopCtx(){const h=S.h;let pre=h.raises===0?(h.limps>0?"limp":"none"):h.raises===1?"raise":"3bet";
+  if(h.flags[0].pfr&&h.raises>=2)pre="3bet";return pre;}
+function preflopAdvice(){
+  const h=code(S.cards[0],S.cards[1]);const pos=posOf(0),rkey=rangeKey(pos),pre=preflopCtx();
+  const top=TOP[h];const why=[];let act,size="";
+  why.push(`Sua mão <b>${h}</b> está entre as <b>top ${(top*100).toFixed(top<0.1?1:0)}%</b> das mãos iniciais. Posição: <b>${pos}</b>.`);
+  const ctxTxt={none:"ninguém entrou no pote",limp:`${S.h.limps} jogador(es) só pagaram (limp)`,raise:"alguém aumentou","3bet":"houve aumento e re-aumento"}[pre];
+  why.push(`Até agora: ${ctxTxt}.`);
+  const inRFI=pos!=="BB"&&(RFI[rkey]||RFI.UTG).has(h);
+  if(pre==="none"){
+    if(pos==="BB"){act="check";why.push("Você está no big blind e ninguém aumentou: passe de graça.");if(ISO.has(h)){act="raise";size="Aumente para ~3–4 BB";why.push("Mão forte: aumente por valor.");}}
+    else if(inRFI){act="raise";size=pos==="SB"?"Aumente para 3 BB":"Aumente para 2,5 BB";why.push(`${h} está na tabela de abertura de ${pos}. Se ninguém entrou, entre AUMENTANDO, nunca só pagando.`);}
+    else{act="fold";why.push(`${h} não está na tabela de abertura de ${pos}.`);}
+  }else if(pre==="limp"){
+    if(ISO.has(h)){act="raise";size=`Aumente para ~${3+S.h.limps+1} BB`;why.push("Contra limpers, aumente com mãos fortes para isolar.");}
+    else if(pos==="BB"){act="check";why.push("No big blind contra limp: passe e veja o flop de graça.");}
+    else if(OVERLIMP.has(h)&&["CO","BTN","SB"].includes(pos)){act="call";size="Pague 1 BB";why.push("Pares pequenos e conectores do mesmo naipe ganham valor em pote com vários jogadores.");}
+    else{act="fold";why.push("Mão fraca demais para entrar.");}
+  }else if(pre==="raise"){
+    const raiser=[...Array(S.players).keys()].find(i=>i!==0&&S.h.flags[i].pfr);
+    if(raiser!==undefined){const pr=profile(raiser);if(pr.n!=="Coletando dados")why.push(`Quem aumentou: ${seatName(raiser)} ${pr.e} ${pr.n}. ${pr.tip}`);}
+    const loose=raiser!==undefined&&smooth(raiser).pfr>0.25;
+    if(VAL3B.has(h)||(loose&&parseRange("JJ,TT,AQs,AQo,AJs,KQs").has(h))){act="raise";size="Re-aumente (3-bet) para ~3× (4× fora de posição)";why.push(loose?"Esse jogador aumenta demais: re-aumente por valor com mais mãos.":"Mão premium: re-aumente por valor.");}
+    else if(BLUFF3B.has(h)&&["CO","BTN","SB","BB"].includes(pos)){act="raise";size="3-bet de ~3×";why.push("A5s/A4s são ótimos 3-bets de blefe.");}
+    else if(pos==="BB"&&BBDEF.has(h)){act="call";why.push("No big blind você já tem fichas no pote: defenda pagando.");}
+    else if(CALLRAISE.has(h)){act="call";why.push("Boa para pagar e ver o flop, não para re-aumentar.");}
+    else{act="fold";why.push("Contra um aumento, essa mão perde para o range de quem aumentou.");}
+  }else{
+    if(VS3B_4B.has(h)){act="raise";size="4-bet (~2,2×) ou all-in";why.push("Contra re-aumento, só as melhores mãos re-aumentam.");}
+    else if(VS3B_CALL.has(h)){act="call";why.push("Forte o bastante para pagar, mas cuidado no flop.");}
+    else{act="fold";why.push("Aumento + re-aumento indica mãos muito fortes.");}
+  }
+  return {act,size,why,nota:Math.max(0,Math.min(10,(1-top)*10)),h};
+}
+const BETF={none:0,small:0.33,half:0.5,pot:1,over:2};
+function outsInfo(board){if(board.length>=5)return null;const hero=[S.cards[0],S.cards[1]];const hc=cat(evaluate(hero.concat(board)));const outs=[];
+  for(const c of unseen()){const nc=cat(evaluate(hero.concat(board,[c])));const bc=cat(evaluate(board.concat([c])));if(nc>hc&&nc>bc)outs.push(c);}
+  const u=unseen().length;return {outs,next:outs.length/u,byRiver:board.length===3?1-((u-outs.length)*(u-outs.length-1))/(u*(u-1)):outs.length/u,street:board.length};}
+function postflopAdvice(){
+  const board=S.cards.slice(2).filter(c=>c!==null);const hero=[S.cards[0],S.cards[1]];const hv=evaluate(hero.concat(board));
+  const opps=activeSeats().filter(i=>i!==0);const n=Math.max(1,opps.length);
+  const masks=opps.length?opps.map(i=>getMask(oppFrac(i))):[getMask(STYLE[S.style].frac)];
+  const res=simulate(masks,4000,true),now=simulate(masks,2500,false);
+  const eq=res.eq,fair=1/(n+1),why=[];let act,size="";
+  const oi=outsInfo(board),draw=oi&&oi.outs.length>=8;const f=(S.h.wait||S.h.aggSeat===0)?0:BETF[S.h.facing];const need=f>0?f/(1+2*f):0;
+  why.push(`Você tem <b>${describe(hv)}</b>${board.length===5&&evaluate(board)===hv?" — mas está tudo na mesa!":""}.`);
+  why.push(`Chance de ganhar contra ${n} oponente${n>1?"s":""}: <b>${(eq*100).toFixed(0)}%</b> (média justa ${(fair*100).toFixed(0)}%).`);
+  const aggr=opps.filter(i=>["raise","allin"].includes(S.h.lastCls[i]));
+  aggr.forEach(i=>{const p=profile(i);if(p.n!=="Coletando dados")why.push(`${seatName(i)} apostou — perfil ${p.e} ${p.n}: ${p.tip}`);});
+  if(f===0){
+    if(eq>=Math.max(0.5,fair*2)){act="raise";size="Aposte ~2/3 do pote";why.push("Você está bem na frente: aposte por VALOR.");}
+    else if(eq>=fair*1.4&&n<=2){act="raise";size="Aposte ~1/2 do pote";why.push("Vantagem razoável contra poucos oponentes.");}
+    else if(draw&&n<=2&&board.length<5&&!opps.some(i=>profile(i).n==="Paga tudo")){act="raise";size="Aposte ~1/2 do pote (semi-blefe)";why.push(`${oi.outs.length} outs: apostar pode fazer desistirem, e você ainda pode completar.`);}
+    else{act="check";why.push("Passe e veja o que os outros fazem.");}
+  }else{
+    why.push(`Pagar exige ganhar pelo menos <b>${(need*100).toFixed(0)}%</b> (odds do pote).`);
+    if(eq>=Math.max(0.6,fair*2.3)&&eq>need+0.15){act="raise";size="Aumente para ~3× a aposta";why.push("Mão muito forte: aumente.");}
+    else if(eq>=need){act="call";why.push("Sua chance é maior que o preço: pagar dá lucro a longo prazo.");}
+    else if(draw&&board.length===3&&eq+0.06>=need&&f<=0.5){act="call";why.push("Um pouco abaixo do preço, mas se acertar ganha mais depois (odds implícitas).");}
+    else{act="fold";why.push("Sua chance é menor que o preço: desistir economiza fichas.");}
+  }
+  return {act,size,why,nota:10*(1-Math.exp(-0.7*eq/fair)),eq,need,now,oi,board,hv,opps};
+}
+
+/* ================= Voz / texto ================= */
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/all[\s-]*in/g,"allin").replace(/([a-z])(\d)/g,"$1 $2").replace(/[^a-z0-9 ]/g," ");
+const RW={as:12,az:12,ace:12,a:12,rei:11,reis:11,k:11,ka:11,ca:11,kei:11,dama:10,damas:10,rainha:10,q:10,que:10,ke:10,valete:9,valetes:9,j:9,jota:9,ja:9,je:9,
+  dez:8,"10":8,t:8,nove:7,"9":7,oito:6,"8":6,sete:5,"7":5,seis:4,meia:4,"6":4,cinco:3,"5":3,quatro:2,"4":2,tres:1,"3":1,dois:0,duas:0,"2":0};
+const SW={copas:1,copa:1,coracao:1,coracoes:1,coracaozinho:1,espada:0,espadas:0,espadinha:0,ouro:2,ouros:2,ourinho:2,losango:2,diamante:2,diamantes:2,
+  paus:3,pau:3,arvore:3,arvores:3,arvorezinha:3,trevo:3,trevinho:3,zap:3};
+const SEATW=["j","jota","jogador","jogadora","g","ge","gi","je","ja","cadeira","posicao","lugar","assento"];
+const NUMW={um:1,uma:1,"1":1,dois:2,duas:2,"2":2,tres:3,"3":3,quatro:4,"4":4,cinco:5,"5":5,seis:6,"6":6,sete:7,"7":7,oito:8,"8":8};
+const AW={fold:["desistiu","desisti","desisto","desistir","desiste","fold","foldou","correu","corri","largou","fugiu"],
+  check:["passou","passei","passo","passar","passa","check","checou","mesa","bateu"],
+  call:["pagou","paguei","pago","pagar","paga","call","igualou","iguala","acompanhou","acompanho","chamou"],
+  raise:["aumentou","aumentei","aumento","aumentar","aumenta","apostou","apostei","aposta","apostar","subiu","raise","bet","reaumentou"],
+  allin:["allin","olin","oline"]};
+const FP=["desisti","desisto","passei","passo","paguei","pago","aumentei","aumento","apostei","aposto","corri"];
+const LEAVEW=["saiu","sai","saindo","levantou","embora","desconectou","caiu"];
+const ENTERW=["entrou","entra","chegou","sentou","novo","nova"];
+const SZW={small:["pouco","pequena","pequeno","terco","minimo","mini","baixo"],half:["meio","metade","medio","media","50"],pot:["pote","grande","muito","forte","alto","cheio"],over:["dobro","overbet"]};
+const ALLACT=Object.values(AW).flat();
+function seatAt(t,i){ // retorna [seat, tokens usados] ou null
+  const w=t[i];if(!SEATW.includes(w))return null;const nx=t[i+1];
+  if(nx in NUMW){const j=i+2;if(j<t.length&&(t[j] in SW||["de","do","da"].includes(t[j])))return null;return [NUMW[nx],2];}
+  return null;
+}
+function parseCmd(text){
+  const t=norm(text).split(/\s+/).filter(Boolean);const ev=[];let pend=null;
+  const findSeatAhead=(i)=>{for(let j=i+1;j<Math.min(t.length,i+7);j++){const r=seatAt(t,j);if(r)return [r[0],j+r[1]-1];}return null;};
+  for(let i=0;i<t.length;i++){const w=t[i];
+    const sr=seatAt(t,i);
+    if(sr){pend=sr[0];i+=sr[1]-1;continue;}
+    const sh=w.match(/^(10|[2-9tjqka])([ceop])$/);
+    if(sh){ev.push({k:"card",c:RANKS.indexOf(sh[1]==="10"?"T":sh[1].toUpperCase())*4+{e:0,c:1,o:2,p:3}[sh[2]]});continue;}
+    if(w in RW){let j=i+1;while(j<t.length&&["de","do","da","dos","das","of","em"].includes(t[j]))j++;
+      if(j<t.length&&t[j] in SW){ev.push({k:"card",c:RW[w]*4+SW[t[j]]});i=j;continue;}}
+    if(w==="eu"){pend=0;continue;}
+    if(w==="proxima"||(w==="nova"&&t[i+1]==="mao")){ev.push({k:"next"});i++;pend=null;continue;}
+    if(["desfazer","desfaz","errei","cancela","cancelar"].includes(w)){ev.push({k:"undo"});continue;}
+    if(["pausar","pausa","desligar"].includes(w)&&(t[i+1]==="microfone"||t[i+1]==="mic"||w!=="pausa")){ev.push({k:"pause"});continue;}
+    if(LEAVEW.includes(w)||(w==="foi"&&t[i+1]==="embora")){let s=pend;if(s==null){const a=findSeatAhead(i);if(a){s=a[0];i=a[1];}}
+      if(s!=null)ev.push({k:"leave",s});pend=null;continue;}
+    if(ENTERW.includes(w)&&!(w==="nova"&&t[i+1]==="mao")){let s=null;const a=findSeatAhead(i);if(a){s=a[0];i=a[1];}else if(pend!=null)s=pend;
+      if(s!=null)ev.push({k:"enter",s});pend=null;continue;}
+    let a=null;for(const k in AW)if(AW[k].includes(w))a=k;
+    if(w==="fui"&&t[i+1]==="allin"){a="allin";i++;if(pend==null)pend=0;}
+    if(a){let size=null;
+      if(a==="raise"){for(let j=i+1;j<Math.min(t.length,i+4);j++){for(const s in SZW)if(SZW[s].includes(t[j]))size=s;if(size){i=j;break;}if(ALLACT.includes(t[j])||t[j] in RW||seatAt(t,j))break;}}
+      const seat=pend!=null?pend:(FP.includes(w)?0:null);
+      ev.push({k:"act",a,size,seat});pend=null;}
+  }
+  return ev;
+}
+function runCmd(text){
+  if(!text||!text.trim())return;const ev=parseCmd(text);const out=[];
+  if(!ev.length){$("heard").innerHTML=`<span style="opacity:.6">Ouvi: “${text}” (sem comando)</span>`;return;}
+  for(const e of ev){
+    if(e.k==="card"){if(S.cards.includes(e.c)){out.push(`${cardTxt(e.c)} já usada`);continue;}
+      const i=S.cards.findIndex(x=>x===null);if(i<0){out.push("mesa cheia");continue;}S.cards[i]=e.c;syncStreet();out.push(`<b>${cardTxt(e.c)}</b>`);}
+    else if(e.k==="act"){const r=doAction(e.a,e.size,e.seat);const who=S.h.log.length?S.h.log[S.h.log.length-1]:"";out.push(r?`⚠️ ${r}`:`<b>${who}</b>`);}
+    else if(e.k==="leave"){const r=leaveSeat(e.s);out.push(r?`⚠️ ${r}`:`<b>${seatName(e.s)} saiu</b>`);}
+    else if(e.k==="enter"){const r=enterSeat(e.s);out.push(r?`⚠️ ${r}`:`<b>novo jogador em ${seatName(e.s)}</b>`);}
+    else if(e.k==="undo"){undoAct();out.push("<b>desfeito</b>");}
+    else if(e.k==="next"){nextHand();out.push("<b>próxima mão</b>");}
+    else if(e.k==="pause"){micStop();out.push("<b>microfone pausado</b>");}
+  }
+  S.slot=Math.max(0,S.cards.findIndex(x=>x===null));
+  $("heard").innerHTML="Entendi: "+out.join(" · ");renderAll();
+}
+const cardTxt=c=>RNAME[rk(c)]+SUITS[st(c)];
+
+/* ================= Microfone contínuo ================= */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+let micWanted=false,rec=null,dict=null,engine=null,lastInterim="",wake=null,restarts=0;
+function micUI(state,msg){const b=$("micMain");b.className="mic "+state;
+  b.innerHTML=state==="on"?"🔴 Microfone LIGADO — toque para pausar":state==="starting"?"⏳ Ligando microfone…":state==="blocked"?"🚫 Microfone bloqueado":"🎙️ Ligar microfone (fica ligado)";
+  if(msg!==undefined)$("micMsg").innerHTML=msg;}
+async function keepAwake(on){try{if(on&&navigator.wakeLock&&!wake){wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>{wake=null;});}if(!on&&wake){await wake.release();wake=null;}}catch(e){}}
+function blocked(){micWanted=false;micUI("blocked",`O navegador não liberou o microfone nesta página. No iPhone isso acontece quando ela é aberta dentro do Claude: use o <b>🎤 do teclado</b> na caixa abaixo, ou abra a versão em site próprio (arquivo enviado na conversa).`);keepAwake(false);}
+function micStart(){
+  micWanted=true;restarts=0;micUI("starting","");keepAwake(true);
+  if(dict){engine="dict";dict.start().then(()=>micUI("on","Pode narrar: “J1 passou, J2 desistiu…”")).catch(e=>{if(SR)startSR();else blocked();});return;}
+  if(SR){startSR();return;}
+  blocked();
+}
+function micStop(){micWanted=false;try{rec&&rec.abort();}catch(e){}try{dict&&engine==="dict"&&dict.stop();}catch(e){}micUI("off","Microfone pausado.");$("interim").textContent="";keepAwake(false);}
+function startSR(){
+  engine="sr";
+  try{rec=new SR();}catch(e){blocked();return;}
+  rec.lang="pt-BR";rec.continuous=!IOS;rec.interimResults=true;rec.maxAlternatives=1;
+  rec.onstart=()=>{micUI("on","Pode narrar: “J1 passou, J2 desistiu…”");};
+  rec.onresult=e=>{let interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){lastInterim="";runCmd(r[0].transcript);}else interim+=r[0].transcript;}
+    lastInterim=interim;$("interim").textContent=interim?"🗣️ "+interim:"";};
+  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture"){blocked();}};
+  rec.onend=()=>{if(lastInterim){const t=lastInterim;lastInterim="";runCmd(t);}$("interim").textContent="";
+    if(micWanted){restarts++;setTimeout(()=>{if(!micWanted)return;try{rec.start();}catch(e){try{startSR();}catch(_){}}},IOS?150:300);}};
+  try{rec.start();}catch(e){blocked();}
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&micWanted){keepAwake(true);if(engine==="sr"){try{rec.start();}catch(e){}}}});
+
+/* ================= UI ================= */
+const $=id=>document.getElementById(id);
+function seg(el,items,cur,onPick){el.innerHTML="";for(const [v,l] of items){const b=document.createElement("button");b.textContent=l;if(v===cur)b.className="on";b.onclick=()=>onPick(v);el.appendChild(b);}}
+const cardHTML=c=>`<span class="c${st(c)}">${RNAME[rk(c)]}</span><span class="su c${st(c)}">${SUITS[st(c)]}</span>`;
+
+function renderSetup(){
+  seg($("segPlayers"),[2,3,4,5,6,7,8,9].map(n=>[n,String(n)]),S.players,v=>{S.players=v;S.occ=Array(v).fill(true);S.buttonSeat=Math.min(S.buttonSeat,v-1);S.stats={};newHand();save();renderAll();});
+  if(occList().length>=2)seg($("segPos"),POSLIST[occList().length].map(p=>[p,p]),posOf(0),v=>{setMyPos(v);newHand();save();renderAll();});
+  seg($("segStyle"),Object.keys(STYLE).map(k=>[k,STYLE[k].lbl]),S.style,v=>{S.style=v;save();renderAll();});
+}
+function renderTable(){
+  const el=$("table");el.querySelectorAll(".seat").forEach(x=>x.remove());const N=S.players,h=S.h;
+  for(let i=0;i<N;i++){const th=(90+i*360/N)*Math.PI/180;const x=50+41*Math.cos(th),y=50+41*Math.sin(th);
+    const d=document.createElement("div");const p=posOf(i);
+    d.className="seat"+(i===0?" me":"")+(h.cur===i?" turn":"")+(h.folded[i]?" folded":"");
+    d.style.left=x+"%";d.style.top=y+"%";
+    if(!S.occ[i]){d.className="seat empty";d.innerHTML=`<div class="nm">${seatName(i)}</div><div class="la">vazio</div>`;el.appendChild(d);continue;}
+    if(!h.dealt[i])d.className+=" folded";
+    const pr=i>0?profile(i):null;
+    d.innerHTML=`${pr&&pr.n!=="Coletando dados"?`<span class="pf">${pr.e}</span>`:""}<div class="nm">${seatName(i)}</div><span class="ps ${p==="BTN"?"btn":(p==="SB"||p==="BB")?"bl":""}">${p==="BTN"?"Ⓓ BTN":p}</span><div class="la ${h.lastCls[i]}">${h.last[i]||""}</div>`;
+    d.onclick=()=>{if(S.occ[i]&&!h.folded[i]&&!h.over){S.undo.push(JSON.stringify(h));h.cur=i;h.wait=false;if(!h.need.includes(i))h.need.push(i);renderAll();}};
+    el.appendChild(d);}
+  const bd=$("miniBoard");bd.innerHTML="";for(let i=2;i<7;i++){const c=S.cards[i];bd.innerHTML+=c===null?`<div class="mc e"></div>`:`<div class="mc">${cardHTML(c)}</div>`;}
+  const stn=["Pré-flop","Flop","Turn","River"][h.street];
+  $("centerInfo").innerHTML=`${stn}${h.over?" · fim":""}`;
+  $("handTag").textContent="Mão "+S.handNo+" · "+posOf(0);
+}
+function renderActs(){
+  const h=S.h,tb=$("turnbar"),ac=$("acts");ac.innerHTML="";
+  if(h.over){tb.className="turnbar";tb.textContent="Mão terminada — toque em Próxima mão";return;}
+  if(h.cur<0){tb.className="turnbar";tb.textContent=h.wait?`Rodada encerrada — coloque as cartas do ${["flop","turn","river"][h.street]}`:"Toque no jogador da vez";return;}
+  const me=h.cur===0;tb.className="turnbar"+(me?" me":"");
+  tb.textContent=me?"👉 SUA VEZ!":`Vez de ${seatName(h.cur)} (${posOf(h.cur)})`;
+  const L=me?ACTME:ACTTXT;const cap=s=>s[0].toUpperCase()+s.slice(1);
+  const items=[["fold",cap(L.fold),"b-fold"],["check",cap(L.check),"b-check"],["call",cap(L.call),"b-call"]];
+  if(h.street===0)items.push(["raise",cap(L.raise),"b-raise"]);
+  else items.push(["raise|small",(me?"Apostei":"Apostou")+" ⅓","b-raise"],["raise|half",(me?"Apostei":"Apostou")+" ½","b-raise"],["raise|pot",(me?"Apostei":"Apostou")+" pote","b-raise"]);
+  items.push(["allin","All-in","b-allin"]);
+  for(const [v,l,c] of items){const b=document.createElement("button");b.className=c;b.textContent=l;const [a,sz]=v.split("|");b.onclick=()=>{doAction(a,sz);renderAll();};ac.appendChild(b);}
+  $("log").innerHTML=h.log.slice().reverse().join("<br>");
+}
+function renderLog(){$("log").innerHTML=S.h.log.slice().reverse().join("<br>");}
+function renderSlots(){
+  const el=$("slots");el.innerHTML="";
+  S.cards.forEach((c,i)=>{if(i===2){const g=document.createElement("div");g.className="gap";el.appendChild(g);}
+    const d=document.createElement("div");d.className="slot"+(i>=2?" sm":"")+(c!==null?" filled":"")+(i===S.slot?" active":"");
+    d.innerHTML=c!==null?cardHTML(c):"+";d.onclick=()=>{S.slot=i;if(S.cards[i]!==null)S.cards[i]=null;renderAll();};el.appendChild(d);});
+  const used=new Set(S.cards.filter(c=>c!==null));const pk=$("picker");pk.innerHTML="";
+  for(let s=0;s<4;s++)for(let r=12;r>=0;r--){const c=r*4+s;const b=document.createElement("button");b.innerHTML=cardHTML(c);b.disabled=used.has(c);
+    b.onclick=()=>{let i=S.slot;if(i>=2&&!heroOk())i=S.cards[0]===null?0:1;if(i>2)for(let j=2;j<i;j++)if(S.cards[j]===null){i=j;break;}
+      S.cards[i]=c;syncStreet();const nx=S.cards.findIndex(x=>x===null);S.slot=nx<0?6:nx;renderAll();};pk.appendChild(b);}
+}
+function renderPlayers(){
+  let html=`<table class="pl"><tr><th>Jogador</th><th>Mãos</th><th>VPIP</th><th>PFR</th><th>Flop</th><th>Agr</th><th></th></tr>`;const tips=[];
+  for(let i=1;i<S.players;i++){
+    if(!S.occ[i]){html+=`<tr><td><b>${seatName(i)}</b></td><td colspan="5" style="color:var(--muted)">vazio</td><td><button class="mini-b in" data-in="${i}">Entrou</button></td></tr>`;continue;}
+    const t=S.stats[i]||emptyStat();const pc=x=>t.h?Math.round(100*x/t.h)+"%":"–";const p=profile(i);
+    html+=`<tr><td><b>${seatName(i)}</b> ${p.e}</td><td>${t.h}</td><td>${pc(t.vpip)}</td><td>${pc(t.pfr)}</td><td>${pc(t.flop)}</td><td>${t.calls+t.agg?((t.agg)/(Math.max(1,t.calls))).toFixed(1):"–"}</td><td><button class="mini-b out" data-out="${i}">Saiu</button></td></tr>`;
+    if(p.n!=="Coletando dados")tips.push(`<div class="prof"><b>${seatName(i)} ${p.e} ${p.n}</b> — ${p.tip}</div>`);}
+  $("players").innerHTML=html+"</table>"+tips.join("");
+  $("players").querySelectorAll("[data-out]").forEach(b=>b.onclick=()=>{leaveSeat(+b.dataset.out);renderAll();});
+  $("players").querySelectorAll("[data-in]").forEach(b=>b.onclick=()=>{enterSeat(+b.dataset.in);renderAll();});
+}
+const ACT={fold:["DESISTIR","v-fold"],check:["PASSAR","v-check"],call:["PAGAR","v-call"],raise:["AUMENTAR","v-raise"]};
+function renderResult(){
+  const v=$("verdict");["statsPanel","oppPanel","outsPanel"].forEach(id=>$(id).style.display="none");const nb=nBoard();
+  if(!heroOk()){v.className="verdict v-wait";v.innerHTML='<div class="act" style="font-size:20px">Diga ou toque suas 2 cartas</div>';return;}
+  if(S.h.folded[0]){v.className="verdict v-wait";v.innerHTML='<div class="act" style="font-size:20px">Você desistiu</div><div class="sub">Continue marcando as ações para estudar os oponentes</div>';return;}
+  if(nb>0&&nb<3){v.className="verdict v-wait";v.innerHTML='<div class="act" style="font-size:20px">Complete o flop (3 cartas)</div>';return;}
+  let a;
+  if(nb===0){a=preflopAdvice();const N=activeSeats().length-1;const sim=simulate(Array(Math.max(1,N)).fill(null),2500,true);
+    $("sEq").textContent=(sim.eq*100).toFixed(0)+"%";$("sNeed").textContent=(100/(N+1)).toFixed(0)+"%";$("sNeedLbl").textContent="Média justa";
+    a.why.push(`Contra ${N} mão(s) aleatória(s) até o fim você ganharia ~${(sim.eq*100).toFixed(0)}%.`);
+    $("handName").textContent=a.h+" — "+(a.nota>=8.5?"Mão premium":a.nota>=7?"Mão forte":a.nota>=5?"Mão jogável":a.nota>=3?"Mão fraca":"Mão muito fraca");
+  }else{a=postflopAdvice();
+    $("sEq").textContent=(a.eq*100).toFixed(0)+"%";$("sNeed").textContent=a.need?(a.need*100).toFixed(0)+"%":"—";$("sNeedLbl").textContent="Precisa p/ pagar";
+    $("handName").textContent=describe(a.hv);$("oppPanel").style.display="";
+    $("boardWarn").innerHTML=boardWarnings(a.board).map(w=>`<div class="warn">⚠️ ${w}</div>`).join("");
+    const rows=[];const hc=cat(a.hv);
+    for(let c=8;c>=0;c--){const p=a.now.bestCat[c];if(p<0.005&&c>0)continue;rows.push(`<tr><td>${CATN[c]}</td><td><div class="mini${c>hc?" hot":""}" style="width:${Math.max(2,p*100)}%"></div></td><td>${p<0.01?"<1":(p*100).toFixed(0)}%</td></tr>`);}
+    $("dist").innerHTML=rows.join("");
+    const rngs=a.opps.map(i=>`${seatName(i)}: top ${Math.round(oppFrac(i)*100)}%`).join(" · ");
+    $("oppNote").innerHTML=`Chance de alguém estar <b>na sua frente agora</b>: <b>${(a.now.ahead*100).toFixed(0)}%</b>. Vermelho = melhor que sua mão.<br>Mãos estimadas pelo perfil: ${rngs}`;
+    if(a.oi){$("outsPanel").style.display="";const o=a.oi;
+      $("outsBody").innerHTML=o.outs.length?`<div><b>${o.outs.length} outs</b> → ${(o.next*100).toFixed(0)}% na próxima carta${o.street===3?`, ${(o.byRiver*100).toFixed(0)}% até o river`:""}.</div><div class="note">Regra do ${o.street===3?4:2}: ${o.outs.length} × ${o.street===3?4:2} ≈ ${o.outs.length*(o.street===3?4:2)}%</div><div style="margin-top:6px">${o.outs.map(c=>`<span class="ctag">${cardHTML(c)}</span>`).join("")}</div>`:"<div>Nenhuma carta melhora sua categoria de mão.</div>";}
+  }
+  const [t,cls]=ACT[a.act];const mine=S.h.cur===0;
+  v.className="verdict "+cls+(mine?" mine":"");
+  v.innerHTML=`<div class="pre">${mine?"👉 Sua vez — recomendação":"Quando chegar sua vez"}</div><div class="act">${t}</div><div class="sub">${a.size||"&nbsp;"}</div>`;
+  $("statsPanel").style.display="";$("sNota").textContent=a.nota.toFixed(1);$("notaBar").style.width=(a.nota*10)+"%";
+  $("why").innerHTML=a.why.map(w=>`<li>${w}</li>`).join("");
+}
+let timer=null;
+function renderAll(){renderSetup();renderTable();renderActs();renderLog();renderSlots();renderPlayers();clearTimeout(timer);timer=setTimeout(renderResult,20);}
+function undoAct(){if(S.undo.length){S.h=JSON.parse(S.undo.pop());}}
+
+$("btnUndoAct").onclick=()=>{undoAct();renderAll();};
+$("btnNext").onclick=nextHand;
+$("btnUndo").onclick=()=>{for(let i=6;i>=0;i--)if(S.cards[i]!==null){S.cards[i]=null;S.slot=i;break;}renderAll();};
+$("btnResetStats").onclick=()=>{S.stats={};S.handNo=1;save();renderAll();};
+const cmd=$("cmd");let idle=null;
+cmd.addEventListener("input",()=>{clearTimeout(idle);idle=setTimeout(()=>{const t=cmd.value;cmd.value="";runCmd(t);},1500);});
+cmd.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();clearTimeout(idle);const t=cmd.value;cmd.value="";runCmd(t);}});
+$("cmdOk").onclick=()=>{clearTimeout(idle);const t=cmd.value;cmd.value="";runCmd(t);};
+
+/* ditado do Claude (navegadores Chromium / app desktop) */
+if(window.claude&&window.claude.use){window.claude.use("dictation").then(d=>{if(!d)return;dict=d;
+  d.onPartial(({text})=>{$("interim").textContent="🗣️ "+text;});
+  d.onFinal(({text})=>{$("interim").textContent="";runCmd(text);});
+  d.onState(({state,reason})=>{if(engine!=="dict")return;if(state==="listening")micUI("on");
+    else if(state==="idle"&&micWanted&&reason!=="viewer_stopped"){d.start().catch(()=>micUI("off","O microfone parou. Toque para ligar de novo."));}
+    else if(state==="idle"&&!micWanted)micUI("off");});
+}).catch(()=>{});}
+$("micMain").onclick=()=>{if(micWanted)micStop();else micStart();};
+
+newHand();
+if(!(()=>{try{return localStorage.getItem("pokerAssessor.v3")}catch(e){return null}})())$("setup").open=true;
+renderAll();
+</script>
+</body>
+</html>
